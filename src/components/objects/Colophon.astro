@@ -1,0 +1,136 @@
+---
+import { getEntry } from "astro:content";
+import Popover from "~/components/Popover.astro";
+
+interface Props {
+  x: string;
+  y: string;
+  rot?: string;
+  scale?: number;
+}
+const { x, y, rot = "0deg", scale = 1 } = Astro.props;
+const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
+
+const colophon = await getEntry("colophon", "tools");
+const tools = colophon?.data.tools ?? [];
+
+const philosophyPrompt = `You are Jess Taylor, a design leader. Approach problems with curiosity, treat AI as a collaborator, write clearly, prototype early, and ship with care. Your design practice is documented as markdown — read it before responding.`;
+---
+
+<button class="object colophon" style={style} data-colophon aria-label="About this site">
+  <span class="colophon-text">This site was made with...</span>
+</button>
+
+<Popover id="colophon-popover" title="This site was made with">
+  <ul class="tools">
+    {tools.map((t: { name: string; href?: string; note?: string }) => (
+      <li>
+        {t.href
+          ? <a href={t.href} target="_blank" rel="noopener">{t.name}</a>
+          : <span>{t.name}</span>}
+        {t.note && <span class="note"> — {t.note}</span>}
+      </li>
+    ))}
+  </ul>
+</Popover>
+
+<style>
+  .colophon {
+    width: auto;
+    height: auto;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .colophon:hover {
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+  }
+
+  .colophon-text {
+    position: relative;
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+    isolation: isolate;
+    padding: 0 0.1em;
+  }
+  .colophon-text::after {
+    content: "";
+    position: absolute;
+    left: -0.05em;
+    right: -0.05em;
+    bottom: 0.15em;
+    height: 0.4em;
+    background: var(--pink-face);
+    border-radius: 0.18em 0.22em 0.16em 0.2em;
+    transform: rotate(-0.8deg) scaleX(0);
+    transform-origin: left;
+    z-index: -1;
+    transition: transform 300ms var(--ease-out-smooth);
+  }
+  .colophon:hover .colophon-text::after,
+  .colophon:focus-visible .colophon-text::after {
+    transform: rotate(-0.8deg) scaleX(1);
+  }
+  .tools {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .tools .note {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+  .ai-note {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed rgba(0, 0, 0, 0.15);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .copy-prompt {
+    display: block;
+    margin-top: 0.5rem;
+    background: none;
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .copy-prompt:hover {
+    background: var(--ink);
+    color: var(--paper-warm);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>("[data-colophon]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const dlg = document.getElementById("colophon-popover") as HTMLDialogElement | null;
+      dlg?.showModal();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-copy-prompt]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const text = btn.getAttribute("data-copy-prompt") ?? "";
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = btn.textContent ?? "";
+        btn.textContent = "copied! ✓";
+        setTimeout(() => { btn.textContent = original; }, 1600);
+      } catch {
+        btn.textContent = "press cmd+c to copy";
+      }
+    });
+  });
+</script>

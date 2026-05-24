@@ -1,0 +1,296 @@
+---
+interface Props {
+  x: string;
+  y: string;
+  rot?: string;
+  scale?: number;
+}
+const { x, y, rot = "0deg", scale = 1 } = Astro.props;
+const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
+
+// leaf positions along the stem (smaller y = higher up)
+// the first entry is the top "sprout" pair, always visible
+const LEAVES = [
+  { y: 42, size: 1.0 },
+  { y: 62, size: 0.9 },
+  { y: 82, size: 0.85 },
+  { y: 100, size: 0.75 },
+  { y: 116, size: 0.65 },
+];
+
+const STEM_X = 50;
+
+function leafPath(attachY: number, dir: 1 | -1, size: number): string {
+  const x0 = STEM_X;
+  const tipX = STEM_X + dir * 22 * size;
+  const ctrl1X = STEM_X + dir * 12 * size;
+  const ctrl2X = STEM_X + dir * 14 * size;
+  const tipY = attachY - 16 * size;
+  const innerY = attachY - 8 * size;
+  return `M${x0},${attachY} Q${ctrl1X},${attachY - 3} ${tipX},${tipY} Q${ctrl2X},${attachY - 22 * size} ${x0},${innerY} Z`;
+}
+---
+
+<div class="object garden" style={style} data-garden role="group" aria-label="Plant — click to water">
+  <button
+    type="button"
+    class="plant-area"
+    data-garden-water
+    aria-label="Water the plant"
+  >
+    <svg viewBox="0 0 100 160" class="plant" aria-hidden="true">
+      {/* pot */}
+      <g class="pot">
+        <path
+          d="M30 128 L70 128 L66 148 Q66 150 64 150 L36 150 Q34 150 34 148 Z"
+          fill="#b8794a"
+          stroke="#1f1b16"
+          stroke-width="1.5"
+          stroke-linejoin="round"
+        />
+        <ellipse cx="50" cy="128" rx="20" ry="3" fill="#7a4d2a" stroke="#1f1b16" stroke-width="1.5" />
+      </g>
+
+      {/* plant body — scales with growth */}
+      <g class="plant-body" data-plant-body>
+        {/* stem */}
+        <path
+          d="M50,128 Q48,100 50,72 Q52,52 50,32"
+          stroke="#3a8a3a"
+          stroke-width="3.5"
+          fill="none"
+          stroke-linecap="round"
+        />
+
+        {/* leaves */}
+        {LEAVES.map((p, i) => (
+          <g
+            class={`leaf-pair leaf-${i}`}
+            data-leaf-index={i}
+            style={`--leaf-y:${p.y}px`}
+          >
+            <path
+              d={leafPath(p.y, -1, p.size)}
+              fill="#8acc4a"
+              stroke="#1f1b16"
+              stroke-width="1.5"
+              stroke-linejoin="round"
+            />
+            <path
+              d={leafPath(p.y, 1, p.size)}
+              fill="#7fc97f"
+              stroke="#1f1b16"
+              stroke-width="1.5"
+              stroke-linejoin="round"
+            />
+          </g>
+        ))}
+
+        {/* flower — only blooms after 5 waters */}
+        <g class="flower" data-flower style="--flower-y:22px">
+          {/* petals (offset slightly around center 50,22) */}
+          <ellipse cx="50" cy="14" rx="4.5" ry="6" fill="#ffb6c1" stroke="#1f1b16" stroke-width="1.2" />
+          <ellipse cx="57" cy="20" rx="5.5" ry="4.5" fill="#ffb6c1" stroke="#1f1b16" stroke-width="1.2" />
+          <ellipse cx="54" cy="29" rx="4.5" ry="5.5" fill="#ffb6c1" stroke="#1f1b16" stroke-width="1.2" />
+          <ellipse cx="46" cy="29" rx="4.5" ry="5.5" fill="#ff9fb3" stroke="#1f1b16" stroke-width="1.2" />
+          <ellipse cx="43" cy="20" rx="5.5" ry="4.5" fill="#ff9fb3" stroke="#1f1b16" stroke-width="1.2" />
+          {/* center */}
+          <circle cx="50" cy="22" r="3.2" fill="#f5c84b" stroke="#1f1b16" stroke-width="1.2" />
+          <circle cx="50" cy="22" r="1.2" fill="#c89318" stroke="none" />
+        </g>
+      </g>
+    </svg>
+  </button>
+
+  <button
+    type="button"
+    class="reset-btn"
+    data-garden-reset
+    title="Reset"
+    aria-label="Reset the plant"
+  >
+    🔄
+  </button>
+</div>
+
+<style>
+  .garden {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 200px;
+    /* generous padding so the cursor swaps to the watering can before reaching the visible plant */
+    padding: 16px;
+  }
+
+  /* the entire plant area becomes a click target with the watering-can cursor */
+  .plant-area {
+    width: 100%;
+    height: 220px;
+    background: none;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    cursor: url("/cursors/watering-can.svg") 2 6, pointer;
+  }
+  .plant-area:focus-visible {
+    outline: 2px dashed rgba(31, 27, 22, 0.5);
+    outline-offset: 4px;
+    border-radius: 8px;
+  }
+
+  .plant {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none; /* clicks land on the parent button */
+  }
+
+  /* whole plant body scales from the pot top as it grows */
+  .plant-body {
+    transform-box: view-box;
+    transform-origin: 50px 128px;
+    transform: scale(var(--growth, 0.55));
+    transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* leaf pairs default to hidden; the first one is always shown */
+  .leaf-pair {
+    transform-box: view-box;
+    transform-origin: 50px var(--leaf-y);
+    transform: scale(0);
+    opacity: 0;
+    transition: opacity 280ms ease, transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .leaf-0,
+  .leaf-pair.is-grown {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  /* flower — hidden until bloomed */
+  .flower {
+    transform-box: view-box;
+    transform-origin: 50px var(--flower-y);
+    transform: scale(0) rotate(-12deg);
+    opacity: 0;
+    transition: opacity 460ms ease, transform 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .flower.is-bloomed {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+
+  /* gentle wiggle feedback on water */
+  .plant-body.is-watering {
+    animation: wiggle 320ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+  @keyframes wiggle {
+    0% { transform: scale(var(--growth, 0.55)) rotate(0); }
+    20% { transform: scale(var(--growth, 0.55)) rotate(-2deg); }
+    50% { transform: scale(var(--growth, 0.55)) rotate(2deg); }
+    80% { transform: scale(var(--growth, 0.55)) rotate(-1deg); }
+    100% { transform: scale(var(--growth, 0.55)) rotate(0); }
+  }
+
+  /* reset button — only visible after bloom */
+  .reset-btn {
+    background: var(--paper-warm);
+    border: 1px dashed rgba(31, 27, 22, 0.3);
+    border-radius: 999px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition:
+      transform 280ms var(--ease-out-smooth),
+      box-shadow 280ms var(--ease-out-smooth),
+      opacity 380ms var(--ease-out-smooth);
+    opacity: 0;
+  }
+  .garden.is-bloomed .reset-btn {
+    display: inline-flex;
+    opacity: 1;
+  }
+  .reset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.3);
+  }
+</style>
+
+<script>
+  import { play } from "~/scripts/sfx";
+
+  const MAX_WATERS = 5;
+  const STORAGE_KEY = "garden-state-v3";
+
+  type State = { waters: number };
+
+  function loadState(): State {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return { waters: 0 };
+  }
+
+  function saveState(s: State) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch {}
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-garden]").forEach((root) => {
+    const body = root.querySelector<SVGGElement>("[data-plant-body]");
+    const leafPairs = root.querySelectorAll<SVGGElement>(".leaf-pair");
+    const flower = root.querySelector<SVGGElement>("[data-flower]");
+    const water = root.querySelector<HTMLButtonElement>("[data-garden-water]");
+    const reset = root.querySelector<HTMLButtonElement>("[data-garden-reset]");
+    if (!body || !flower || !water || !reset) return;
+    const bodyEl = body;
+    const flowerEl = flower;
+
+    const state = loadState();
+
+    const render = () => {
+      const growth = Math.min(1.15, 0.55 + state.waters * 0.13);
+      bodyEl.style.setProperty("--growth", String(growth));
+
+      leafPairs.forEach((leaf, i) => {
+        if (i !== 0 && i <= state.waters) leaf.classList.add("is-grown");
+        else if (i !== 0) leaf.classList.remove("is-grown");
+      });
+
+      const bloomed = state.waters >= MAX_WATERS;
+      flowerEl.classList.toggle("is-bloomed", bloomed);
+      root.classList.toggle("is-bloomed", bloomed);
+    };
+    render();
+
+    water.addEventListener("click", () => {
+      if (state.waters >= MAX_WATERS) return; // already bloomed — ignore further water
+      state.waters++;
+      saveState(state);
+      render();
+      try { play("drip"); } catch {}
+      // little wiggle for feedback
+      bodyEl.classList.remove("is-watering");
+      void bodyEl.getBoundingClientRect(); // restart animation
+      bodyEl.classList.add("is-watering");
+      setTimeout(() => bodyEl.classList.remove("is-watering"), 350);
+    });
+
+    reset.addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.waters = 0;
+      saveState(state);
+      render();
+    });
+  });
+</script>

@@ -1,0 +1,94 @@
+---
+interface Props {
+  x: string;
+  y: string;
+  rot?: string;
+  scale?: number;
+}
+const { x, y, rot = "0deg", scale = 1 } = Astro.props;
+const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
+---
+
+<button class="object echo" style={style} data-label="Feed Echo" data-echo aria-label="Feed Echo the dog">
+  <span class="echo-bob" data-echo-bob>
+    <img src="/art/echo-v2.png" alt="Echo, a sketch of a spaniel" width="180" height="220" />
+  </span>
+  <span class="treat" aria-hidden="true" data-echo-treat>🦴</span>
+</button>
+
+<style>
+  .echo {
+    width: 180px;
+    height: 220px;
+    background: none;
+    border: none;
+    padding: 0;
+    position: absolute;
+    left: var(--x, 50%);
+    top: var(--y, 50%);
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+  }
+  .echo-bob {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .echo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+    /* transparent PNG drawn straight onto the page — no shadow, so it
+       reads as sketched into the background */
+  }
+  .treat {
+    position: absolute;
+    left: 50%;
+    bottom: -8px;
+    transform: translate(-50%, 0) scale(0);
+    font-size: 28px;
+    pointer-events: none;
+    opacity: 0;
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+
+  document.querySelectorAll<HTMLButtonElement>("[data-echo]").forEach((btn) => {
+    const bob = btn.querySelector("[data-echo-bob]");
+    const treat = btn.querySelector("[data-echo-treat]");
+    btn.addEventListener("click", () => {
+      if (bob) {
+        gsap.killTweensOf(bob);
+        gsap.fromTo(
+          bob,
+          { y: 0, rotate: 0 },
+          {
+            keyframes: [
+              { y: -10, rotate: -3, duration: 0.12 },
+              { y: 0, rotate: 0, duration: 0.12 },
+              { y: -6, rotate: 2, duration: 0.1 },
+              { y: 0, rotate: 0, duration: 0.14, ease: "sine.out" },
+            ],
+          },
+        );
+      }
+      if (treat) {
+        gsap.killTweensOf(treat);
+        gsap.fromTo(
+          treat,
+          { y: 30, scale: 0, opacity: 0 },
+          {
+            keyframes: [
+              { y: 0, scale: 1, opacity: 1, duration: 0.18 },
+              { y: -20, scale: 1, opacity: 1, duration: 0.25, delay: 0.1 },
+              { y: -40, scale: 0, opacity: 0, duration: 0.18 },
+            ],
+          },
+        );
+      }
+    });
+  });
+</script>

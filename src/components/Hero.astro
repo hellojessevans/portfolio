@@ -1,0 +1,379 @@
+---
+import { getEntry } from "astro:content";
+
+const intro = await getEntry("bio", "intro");
+const { name, role, blurb, contacts = [], apps = [] } = intro!.data;
+const body = intro!.body ?? "";
+---
+
+<header class="hero">
+  <h1 class="name"><span class="name-text">{name}</span></h1>
+  <p class="role">{role}</p>
+  <p class="blurb">{blurb}</p>
+  {body && <div class="body" set:html={body} />}
+  {
+    contacts.length > 0 && (
+      <nav class="actions" aria-label="Contact">
+        {contacts.map(
+          (c: {
+            label: string;
+            href: string;
+            copy?: string;
+            popover?: string;
+            download?: boolean;
+          }) =>
+            c.copy ? (
+              <button
+                type="button"
+                class="push-btn"
+                data-copy={c.copy}
+                data-copy-label={c.label}
+              >
+                {c.label}
+              </button>
+            ) : c.popover ? (
+              <button
+                type="button"
+                class="push-btn"
+                data-popover={c.popover}
+              >
+                {c.label}
+              </button>
+            ) : (
+              <a
+                class="push-btn"
+                href={c.href}
+                rel="noopener"
+                download={c.download ? (typeof c.download === "string" ? c.download : "") : undefined}
+                target={
+                  c.download
+                    ? undefined
+                    : c.href.startsWith("http")
+                      ? "_blank"
+                      : undefined
+                }
+              >
+                {c.label}
+              </a>
+            ),
+        )}
+      </nav>
+    )
+  }
+  {
+    apps.length > 0 && (
+      <section class="credits" aria-label="Lead designer for">
+        <p class="credits-label">Lead designer for</p>
+        <ul class="apps">
+          {apps.map((a: { name: string; icon: string; rating?: number; url?: string }) => (
+            <li class="app">
+              {a.url ? (
+                <a
+                  class="app-link"
+                  href={a.url}
+                  target="_blank"
+                  rel="noopener"
+                  aria-label={`${a.name} on the App Store${a.rating != null ? ` — rated ${a.rating.toFixed(1)}` : ""}`}
+                >
+                  <img src={a.icon} alt={a.name} width="46" height="46" loading="lazy" />
+                </a>
+              ) : (
+                <img src={a.icon} alt={a.name} width="46" height="46" loading="lazy" />
+              )}
+              {a.rating != null && (
+                <span class="app-rating" aria-hidden="true">
+                  <span class="star">★</span>
+                  {a.rating.toFixed(1)}
+                </span>
+              )}
+              {!a.url && (
+                <span class="sr-only">
+                  {a.name}
+                  {a.rating != null && ` — App Store rating ${a.rating.toFixed(1)}`}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+  <div class="toast" data-toast role="status" aria-live="polite"></div>
+</header>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>("[data-copy]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const value = btn.getAttribute("data-copy") ?? "";
+      const label = btn.getAttribute("data-copy-label") ?? "Value";
+      const toast = document.querySelector<HTMLElement>("[data-toast]");
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(value);
+        ok = true;
+      } catch {
+        // fallback for contexts where the async clipboard API is blocked
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = value;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+        } catch {
+          ok = false;
+        }
+      }
+      if (toast) {
+        toast.textContent = ok
+          ? `${label} copied — ${value}`
+          : `Copy failed — ${value}`;
+        toast.classList.add("is-visible");
+        window.clearTimeout((toast as any)._t);
+        (toast as any)._t = window.setTimeout(() => {
+          toast.classList.remove("is-visible");
+        }, 2600);
+      }
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-popover]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-popover") ?? "";
+      const dlg = document.getElementById(id) as HTMLDialogElement | null;
+      dlg?.showModal();
+    });
+  });
+</script>
+
+<style>
+  .hero {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    max-width: 36rem;
+    padding: 0 1.5rem;
+    pointer-events: none;
+  }
+
+  .name {
+    font-family: var(--font-script);
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    font-weight: 400;
+    line-height: 1;
+    margin: 0 0 1.5rem;
+    color: var(--ink);
+  }
+
+  /* pink highlighter swipe behind the name */
+  .name-text {
+    position: relative;
+    display: inline-block;
+    isolation: isolate;
+    padding: 0 0.12em;
+  }
+  .name-text::after {
+    content: "";
+    position: absolute;
+    left: -0.05em;
+    right: -0.05em;
+    bottom: 0.1em;
+    height: 0.42em;
+    background: var(--pink-face);
+    border-radius: 0.18em 0.22em 0.16em 0.2em;
+    transform: rotate(-1.6deg);
+    z-index: -1;
+  }
+
+  .role {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    font-family: var(--font-mono);
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin: 0 0 0.75rem;
+    color: var(--ink);
+  }
+  .role::before {
+    content: "";
+    width: 0.55em;
+    height: 0.55em;
+    border-radius: 50%;
+    background: var(--pink-face);
+    border: 1.5px solid var(--pink-border);
+    box-shadow: 0 0 0 0 var(--pink-face);
+    flex-shrink: 0;
+    animation: status-pulse 2.4s var(--ease-out-smooth) infinite;
+  }
+  @keyframes status-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(249, 196, 210, 0.7); }
+    70% { box-shadow: 0 0 0 0.5em rgba(249, 196, 210, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(249, 196, 210, 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .role::before { animation: none; }
+  }
+
+  .blurb {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin: 1rem auto 0;
+    max-width: 30rem;
+  }
+
+  .body {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-top: 1rem;
+  }
+
+  .actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2.25rem;
+    /* re-enable interaction (the hero itself is pointer-events:none) */
+    pointer-events: auto;
+  }
+
+  /* "lead designer for" app credits strip */
+  .credits {
+    margin-top: 2rem;
+    pointer-events: auto;
+  }
+  .credits-label {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .apps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 0.85rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .app {
+    position: relative;
+    display: block;
+  }
+  .app-link {
+    display: block;
+    line-height: 0;
+    border-radius: 0.7em;
+  }
+  .app img {
+    display: block;
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
+    border-radius: 0.7em;
+    border: 2px solid var(--pink-border);
+    background: var(--pink-bg);
+    transition:
+      transform 200ms var(--ease-out-smooth),
+      box-shadow 200ms var(--ease-out-smooth);
+  }
+  .app:hover img,
+  .app:focus-within img {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px -6px rgba(80, 50, 62, 0.4);
+  }
+
+  .app-rating {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translate(-50%, 4px);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    padding: 0.35em 0.6em;
+    background: var(--pink-bg);
+    border: 2px solid var(--pink-border);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--pink-ink);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 220ms var(--ease-out-smooth),
+      transform 220ms var(--ease-out-smooth);
+  }
+  .app:hover .app-rating,
+  .app:focus-within .app-rating {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  .app-rating .star {
+    display: inline-flex;
+    align-items: center;
+    color: var(--pink-border);
+    font-size: 1.5em;
+    line-height: 0;
+    /* optical lift — the glyph paints low within its box vs the digits */
+    transform: translateY(-0.09em);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* copy confirmation toast — same pink/mauve language as the buttons */
+  .toast {
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 1.25rem);
+    transform: translate(-50%, -0.4rem);
+    background: var(--pink-bg);
+    color: var(--pink-ink);
+    border: 2px solid var(--pink-border);
+    border-radius: var(--radius);
+    padding: 0.7em 1.1em;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 260ms var(--ease-out-smooth),
+      transform 260ms var(--ease-out-smooth);
+    z-index: 200;
+  }
+  .toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+</style>

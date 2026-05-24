@@ -1,0 +1,239 @@
+---
+import { getCollection } from "astro:content";
+import Popover from "~/components/Popover.astro";
+
+interface Props {
+  x: string;
+  y: string;
+  rot?: string;
+  scale?: number;
+}
+const { x, y, rot = "0deg", scale = 1 } = Astro.props;
+const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
+
+const studies = (await getCollection("caseStudies")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<button
+  class="object case-folder"
+  style={style}
+  data-case-folder
+  aria-label="Open case studies"
+>
+  <div class="file">
+    <div class="work-5"></div>
+    <div class="work-4"></div>
+    <div class="work-3"></div>
+    <div class="work-2"></div>
+    <div class="work-1"></div>
+  </div>
+  <span class="folder-label">Case Studies</span>
+</button>
+
+<Popover id="case-studies" title="Case studies">
+  <ul class="cs-list">
+    {studies.map((s) => (
+      <li>
+        <strong>{s.data.title}</strong>
+        {(s.data.year || s.data.role) && (
+          <span class="cs-meta">
+            {s.data.year}
+            {s.data.year && s.data.role ? " · " : ""}
+            {s.data.role}
+          </span>
+        )}
+        <span class="cs-summary">{s.data.summary}</span>
+        {s.data.href && (
+          <a href={s.data.href} target="_blank" rel="noopener">read the full thing ↗</a>
+        )}
+      </li>
+    ))}
+  </ul>
+</Popover>
+
+<style>
+  .case-folder {
+    width: 240px;
+    height: 200px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  /* neutralise the global .object hover-scale so the folder's own 3D hover is clean */
+  .case-folder:hover {
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+  }
+
+  /* --- folder (after Cobp, Uiverse) — recoloured to the pink/mauve theme --- */
+  .file {
+    position: relative;
+    width: 240px;
+    height: 160px;
+    cursor: pointer;
+    transform-origin: bottom;
+    perspective: 1500px;
+  }
+
+  .work-5 {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: var(--pink-border);
+    transform-origin: top;
+    border-radius: 16px;
+    border-top-left-radius: 0;
+    transition: all 300ms ease;
+    box-shadow:
+      0 4px 8px rgba(80, 50, 62, 0.12),
+      0 8px 24px rgba(80, 50, 62, 0.1);
+  }
+  .work-5::after {
+    position: absolute;
+    content: "";
+    bottom: 99%;
+    left: 0;
+    width: 80px;
+    height: 16px;
+    background: var(--pink-border);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+  .work-5::before {
+    position: absolute;
+    content: "";
+    top: -15px;
+    left: 75.5px;
+    width: 16px;
+    height: 16px;
+    background: var(--pink-border);
+    clip-path: polygon(0 35%, 0% 100%, 50% 100%);
+  }
+  .case-folder:hover .work-5 {
+    box-shadow: 0 20px 40px rgba(80, 50, 62, 0.25);
+  }
+
+  .work-4,
+  .work-3,
+  .work-2 {
+    position: absolute;
+    inset: 4px;
+    border-radius: 16px;
+    transition: all 300ms ease;
+    transform-origin: bottom;
+    user-select: none;
+  }
+  .work-4 { background: #e7d3da; }
+  .work-3 { background: #f0e1e6; }
+  .work-2 { background: #f9eef1; }
+  .case-folder:hover .work-4 { transform: rotateX(-20deg); }
+  .case-folder:hover .work-3 { transform: rotateX(-30deg); }
+  .case-folder:hover .work-2 { transform: rotateX(-38deg); }
+
+  .work-1 {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 156px;
+    background: linear-gradient(to top, var(--pink-border), var(--pink-face));
+    border-radius: 16px;
+    border-top-right-radius: 0;
+    transform-origin: bottom;
+    transition: all 300ms ease;
+    display: flex;
+    align-items: flex-end;
+  }
+  .work-1::after {
+    position: absolute;
+    content: "";
+    bottom: 99%;
+    right: 0;
+    width: 146px;
+    height: 16px;
+    background: var(--pink-face);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+  .work-1::before {
+    position: absolute;
+    content: "";
+    top: -10px;
+    right: 142px;
+    width: 12px;
+    height: 12px;
+    background: var(--pink-face);
+    clip-path: polygon(100% 14%, 50% 100%, 100% 100%);
+  }
+  .case-folder:hover .work-1 {
+    box-shadow:
+      inset 0 20px 40px var(--pink-face),
+      inset 0 -20px 40px var(--pink-border);
+    transform: rotateX(-46deg) translateY(1px);
+  }
+
+  .folder-label {
+    margin-top: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--pink-ink);
+    opacity: 0;
+    transform: translateY(4px);
+    transition:
+      opacity 260ms var(--ease-out-smooth),
+      transform 260ms var(--ease-out-smooth);
+  }
+  .case-folder:hover .folder-label,
+  .case-folder:focus-visible .folder-label {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .cs-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .cs-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .cs-list strong {
+    font-size: 0.95rem;
+  }
+  .cs-meta {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+  }
+  .cs-summary {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .cs-list a {
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>("[data-case-folder]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const dlg = document.getElementById("case-studies") as HTMLDialogElement | null;
+      dlg?.showModal();
+    });
+  });
+</script>

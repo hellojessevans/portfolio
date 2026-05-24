@@ -1,0 +1,41 @@
+---
+import Base from "~/layouts/Base.astro";
+import Stage from "~/components/Stage.astro";
+import Hero from "~/components/Hero.astro";
+import MobileFallback from "~/components/MobileFallback.astro";
+import Loader from "~/components/Loader.astro";
+import GradientBackground from "~/components/GradientBackground.astro";
+
+import Echo from "~/components/objects/Echo.astro";
+import Garden from "~/components/objects/Garden.astro";
+import RecordPlayer from "~/components/objects/RecordPlayer.astro";
+import Bookshelf from "~/components/objects/Bookshelf.astro";
+import CaseStudyPapers from "~/components/objects/CaseStudyPapers.astro";
+import PracticeFolder from "~/components/objects/PracticeFolder.astro";
+import Colophon from "~/components/objects/Colophon.astro";
+import HackathonCard from "~/components/objects/HackathonCard.astro";
+import Reference from "~/components/objects/Reference.astro";
+---
+
+<Base>
+  <GradientBackground />
+  <Loader />
+  <MobileFallback />
+  <Stage>
+    <Hero />
+
+    <Garden x="16%" y="22%" rot="-2deg" />
+    <PracticeFolder x="38%" y="16%" rot="-2deg" />
+    <PracticeFolder entry="skills" x="62%" y="16%" rot="2deg" />
+    <RecordPlayer x="86%" y="22%" rot="-4deg" />
+
+    <Bookshelf x="11%" y="57%" rot="2deg" />
+    <Echo x="88%" y="62%" rot="0deg" />
+
+    <!-- <Reference x="50%" y="82%" rot="-1deg" /> -->
+    <HackathonCard x="27%" y="82%" rot="3deg" />
+    <CaseStudyPapers x="70%" y="85%" rot="-8deg" scale={0.62} />
+
+    <Colophon x="50%" y="96%" />
+  </Stage>
+</Base>

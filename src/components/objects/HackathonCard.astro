@@ -1,0 +1,142 @@
+---
+interface Props {
+  x: string;
+  y: string;
+  rot?: string;
+  scale?: number;
+}
+const { x, y, rot = "0deg", scale = 1 } = Astro.props;
+const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
+
+const awards = [
+  { year: "2025", title: "Award for Outstanding use of AI / ML" },
+  { year: "2024", title: "Award for Outstanding use of Technology" },
+];
+---
+
+<div class="object hackathon-card" style={style} data-hackathon-tilt>
+  <div class="card-inner">
+    <div class="card-face">
+      <span class="card-eyebrow">Nine Hackathon Winner</span>
+
+      <ul class="award-list">
+        {awards.map((a) => (
+          <li class="award">
+            <span class="award-year">{a.year}</span>
+            <span class="award-text">{a.title}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<style>
+  .hackathon-card {
+    width: 210px;
+    cursor: default;
+    perspective: 800px;
+  }
+  .hackathon-card:hover {
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+  }
+
+  .card-inner {
+    transform-style: preserve-3d;
+    transform: rotateX(4deg) rotateY(-3deg);
+    transition: transform 600ms var(--ease-out-smooth);
+    will-change: transform;
+  }
+  .hackathon-card:hover .card-inner {
+    transition: transform 120ms ease-out;
+  }
+
+  .card-face {
+    position: relative;
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1rem 1rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      0 1px 3px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+
+  .card-face::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      ellipse at 30% 0%,
+      rgba(255, 255, 255, 0.05) 0%,
+      transparent 60%
+    );
+    pointer-events: none;
+  }
+
+  .card-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .award-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .award {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .award-year {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--pink-face);
+  }
+
+  .award-text {
+    font-size: 0.65rem;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.65);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-hackathon-tilt]").forEach((card) => {
+    const inner = card.querySelector<HTMLElement>(".card-inner");
+    if (!inner) return;
+
+    card.addEventListener("mousemove", (e) => {
+      const rect = card.getBoundingClientRect();
+      const xPct = (e.clientX - rect.left) / rect.width - 0.5;
+      const yPct = (e.clientY - rect.top) / rect.height - 0.5;
+      const rotY = xPct * 18;
+      const rotX = yPct * -18;
+      inner.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+    });
+
+    card.addEventListener("mouseleave", () => {
+      inner.style.transform = "rotateX(4deg) rotateY(-3deg)";
+    });
+  });
+</script>

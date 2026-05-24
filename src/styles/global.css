@@ -1,0 +1,195 @@
+/* --- design tokens --- */
+:root {
+  --paper: #f5f1e8;
+  --paper-warm: #fbf7ee;
+  --ink: #1f1b16;
+  --ink-soft: #6b6256;
+  --accent: #c2452d;
+
+  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+  --font-script: "Caveat", "Homemade Apple", ui-serif, cursive;
+  --font-mono: ui-monospace, "JetBrains Mono", "Menlo", monospace;
+
+  /* shared easing for hover/UI transitions — settles softly */
+  --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* interaction palette — anything clickable speaks pink */
+  --pink-bg: #fff0f0;
+  --pink-bg-hover: #ffe9e9;
+  --pink-face: #f9c4d2;
+  --pink-shadow: #ffe3e2;
+  --pink-border: #b18597;
+  --pink-ink: #382b22;
+  --ease-push: cubic-bezier(0, 0, 0.58, 1);
+  --radius: 0.75em;
+}
+
+/* --- shared "pushable" button (after Madflows, Uiverse) ---
+   use on <a>/<button>: class="push-btn". the 3D press is the site-wide
+   interaction language. */
+.push-btn {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  outline: none;
+  border: 0;
+  vertical-align: middle;
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pink-ink);
+  padding: 0.85em 1.35em;
+  background: var(--pink-bg);
+  border: 2px solid var(--pink-border);
+  border-radius: var(--radius);
+  transform-style: preserve-3d;
+  transition:
+    transform 150ms var(--ease-push),
+    background 150ms var(--ease-push);
+}
+.push-btn::before {
+  position: absolute;
+  content: "";
+  inset: 0;
+  background: var(--pink-face);
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px var(--pink-border), 0 0.6em 0 0 var(--pink-shadow);
+  transform: translate3d(0, 0.6em, -1em);
+  transition:
+    transform 150ms var(--ease-push),
+    box-shadow 150ms var(--ease-push);
+}
+.push-btn:hover {
+  background: var(--pink-bg-hover);
+  transform: translate(0, 0.2em);
+}
+.push-btn:hover::before {
+  box-shadow: 0 0 0 2px var(--pink-border), 0 0.45em 0 0 var(--pink-shadow);
+  transform: translate3d(0, 0.45em, -1em);
+}
+.push-btn:active {
+  background: var(--pink-bg-hover);
+  transform: translate(0, 0.6em);
+}
+.push-btn:active::before {
+  box-shadow: 0 0 0 2px var(--pink-border), 0 0 var(--pink-shadow);
+  transform: translate3d(0, 0, -1em);
+}
+
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: local("Caveat");
+}
+
+/* --- reset --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100%;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+@media (max-width: 899px), (pointer: coarse) {
+  body {
+    overflow: auto;
+  }
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+/* --- stage object placement convention ---
+   each scattered object uses CSS custom properties so positioning is data, not styling.
+   <Foo style="--x:18%; --y:62%; --rot:-3deg; --scale:1" />
+*/
+.object {
+  position: absolute;
+  left: var(--x, 50%);
+  top: var(--y, 50%);
+  transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+  transform-origin: center;
+  cursor: pointer;
+  transition: transform 340ms var(--ease-out-smooth), opacity 600ms ease-out;
+}
+
+/* Entrance: hidden while loader is up, fade in once body.is-ready */
+.stage .object,
+.stage .hero {
+  opacity: 0;
+}
+body.is-ready .stage .object,
+body.is-ready .stage .hero {
+  opacity: 1;
+  transition:
+    opacity 700ms ease-out,
+    transform 340ms var(--ease-out-smooth);
+}
+body.is-ready .stage .hero { transition-delay: 0ms; }
+body.is-ready .stage .object:nth-of-type(1) { transition-delay: 80ms; }
+body.is-ready .stage .object:nth-of-type(2) { transition-delay: 140ms; }
+body.is-ready .stage .object:nth-of-type(3) { transition-delay: 200ms; }
+body.is-ready .stage .object:nth-of-type(4) { transition-delay: 260ms; }
+body.is-ready .stage .object:nth-of-type(5) { transition-delay: 320ms; }
+body.is-ready .stage .object:nth-of-type(6) { transition-delay: 380ms; }
+body.is-ready .stage .object:nth-of-type(7) { transition-delay: 440ms; }
+body.is-ready .stage .object:nth-of-type(8) { transition-delay: 500ms; }
+body.is-ready .stage .object:nth-of-type(9) { transition-delay: 560ms; }
+
+.object:hover {
+  transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(calc(var(--scale, 1) * 1.05));
+}
+
+.object[data-label]::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  background: var(--paper-warm);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms var(--ease-out-smooth), transform 320ms var(--ease-out-smooth);
+}
+
+.object:hover[data-label]::after {
+  opacity: 1;
+  transform: translate(-50%, 6px);
+}

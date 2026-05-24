@@ -1,0 +1,30 @@
+---
+---
+
+<div class="stage" data-stage>
+  <slot />
+</div>
+
+<style>
+  .stage {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    /* transparent so the GradientBackground shader shows through; the dot
+       pattern stays as a subtle overlay on top of it */
+    background: transparent;
+    background-image:
+      radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+      radial-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+    background-size: 24px 24px, 80px 80px;
+    background-position: 0 0, 12px 12px;
+  }
+
+  @media (max-width: 899px), (pointer: coarse) {
+    .stage {
+      display: none;
+    }
+  }
+</style>

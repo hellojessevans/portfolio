@@ -1,0 +1,99 @@
+---
+interface Props {
+  id: string;
+  title?: string;
+}
+
+const { id, title } = Astro.props;
+---
+
+<dialog class="popover" id={id} data-popover>
+  <form method="dialog" class="close-form">
+    <button class="close" aria-label="close" value="close">×</button>
+  </form>
+  {title && <h2 class="title">{title}</h2>}
+  <div class="content">
+    <slot />
+  </div>
+</dialog>
+
+<style>
+  .popover {
+    border: none;
+    border-radius: 6px;
+    padding: 2.25rem 2rem 2rem;
+    max-width: 38rem;
+    width: calc(100vw - 3rem);
+    background: var(--paper-warm);
+    color: var(--ink);
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.04),
+      0 30px 80px -20px rgba(0, 0, 0, 0.25);
+    font-family: var(--font-mono);
+  }
+
+  .popover::backdrop {
+    background: rgba(20, 18, 14, 0.35);
+    backdrop-filter: blur(2px);
+  }
+
+  .popover[open] {
+    animation: pop 180ms ease-out;
+  }
+
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .close-form {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    margin: 0;
+  }
+
+  .close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--ink-soft);
+    padding: 0.25rem 0.5rem;
+  }
+
+  .close:hover {
+    color: var(--ink);
+  }
+
+  .title {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin: 0 0 1rem;
+  }
+
+  .content :global(p) {
+    line-height: 1.7;
+    margin: 0 0 1rem;
+  }
+
+  .content :global(a) {
+    color: var(--accent);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLDialogElement>("[data-popover]").forEach((dialog) => {
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+  });
+</script>

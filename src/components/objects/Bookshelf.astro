@@ -1,0 +1,182 @@
+---
+import { getEntry } from "astro:content";
+
+interface Props {
+  x: string;
+  y: string;
+  rot?: string;
+  scale?: number;
+}
+const { x, y, rot = "0deg", scale = 1 } = Astro.props;
+const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
+
+const books = await getEntry("books", "reading");
+const { challengeYear, challengeGoal, read, currentlyReading } = books!.data;
+const pct = Math.min(100, Math.round((read / challengeGoal) * 100));
+---
+
+<div class="object bookshelf" style={style} role="group" aria-label={`${challengeYear} reading challenge: ${read} of ${challengeGoal} books read`}>
+  <svg
+    class="shelf"
+    viewBox="0 0 170 150"
+    width="148"
+    height="131"
+    fill="none"
+    stroke="#b18597"
+    stroke-width="2.4"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+    aria-hidden="true"
+  >
+    <g>
+      <rect x="22" y="44" width="15" height="82" rx="2.5" fill="#f9c4d2" />
+      <line x1="25" y1="56" x2="34" y2="56" stroke-width="1.4" stroke-opacity="0.5" />
+      <rect x="38" y="58" width="13" height="68" rx="2.5" fill="#ffe3e2" />
+      <line x1="41" y1="70" x2="48" y2="70" stroke-width="1.4" stroke-opacity="0.5" />
+      <rect x="52" y="36" width="16" height="90" rx="2.5" fill="#e3a9bd" />
+      <line x1="56" y1="50" x2="64" y2="50" stroke-width="1.4" stroke-opacity="0.45" />
+      <rect x="69" y="64" width="12" height="62" rx="2.5" fill="#fff0f0" />
+      <line x1="72" y1="74" x2="78" y2="74" stroke-width="1.4" stroke-opacity="0.5" />
+      <rect x="82" y="48" width="15" height="78" rx="2.5" fill="#f9c4d2" />
+      <line x1="85" y1="60" x2="94" y2="60" stroke-width="1.4" stroke-opacity="0.5" />
+      <rect x="98" y="56" width="13" height="70" rx="2.5" fill="#ffe3e2" />
+      <line x1="101" y1="68" x2="108" y2="68" stroke-width="1.4" stroke-opacity="0.5" />
+      <rect x="112" y="40" width="15" height="86" rx="2.5" fill="#e3a9bd" />
+      <line x1="116" y1="54" x2="124" y2="54" stroke-width="1.4" stroke-opacity="0.45" />
+    </g>
+    <g transform="rotate(13 132 126)">
+      <rect x="128" y="52" width="14" height="74" rx="2.5" fill="#fff0f0" />
+      <line x1="131" y1="64" x2="138" y2="64" stroke-width="1.4" stroke-opacity="0.5" />
+    </g>
+    <path d="M10 126 H160 a4 4 0 0 1 4 4 v6 a4 4 0 0 1 -4 4 H10 a4 4 0 0 1 -4 -4 v-6 a4 4 0 0 1 4 -4 Z" fill="#fff0f0" />
+    <path d="M12 140 v6 a3 3 0 0 0 3 3 h6 a3 3 0 0 0 3 -3 v-6" fill="#fff0f0" />
+    <path d="M146 140 v6 a3 3 0 0 0 3 3 h6 a3 3 0 0 0 3 -3 v-6" fill="#fff0f0" />
+  </svg>
+
+  <div class="progress">
+    <div class="count">
+      <span class="read">{read}</span><span class="goal">/{challengeGoal}</span>
+    </div>
+    <div class="cap">{challengeYear} reading challenge</div>
+    <div class="bar" role="progressbar" aria-valuenow={read} aria-valuemin="0" aria-valuemax={challengeGoal}>
+      <span class="fill" style={`width:${pct}%`}></span>
+    </div>
+  </div>
+
+  {
+    currentlyReading && (
+      <div class="now-reading" aria-hidden="true">
+        <span class="nr-label">Currently reading</span>
+        <span class="nr-title">{currentlyReading.title}</span>
+        <span class="nr-author">{currentlyReading.author}</span>
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .bookshelf {
+    width: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: default;
+  }
+  /* no scale-on-hover; the detail card is the hover affordance */
+  .bookshelf:hover {
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+  }
+
+  .shelf {
+    display: block;
+    filter: drop-shadow(0 5px 6px rgba(80, 50, 62, 0.18));
+  }
+
+  .progress {
+    text-align: center;
+    font-family: var(--font-mono);
+    width: 100%;
+  }
+  .count {
+    color: var(--pink-ink);
+    line-height: 1;
+  }
+  .count .read {
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+  .count .goal {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--pink-border);
+  }
+  .cap {
+    margin-top: 3px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .bar {
+    margin-top: 7px;
+    height: 8px;
+    width: 100%;
+    background: var(--pink-shadow);
+    border: 1.5px solid var(--pink-border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .fill {
+    display: block;
+    height: 100%;
+    background: var(--pink-border);
+    border-radius: 999px;
+    transition: width 600ms var(--ease-out-smooth);
+  }
+
+  /* hover detail — pink/mauve language, toned down (no heavy shadow) */
+  .now-reading {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translate(-50%, -4px);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 100%;
+    padding: 0.6em 0.9em;
+    background: var(--pink-bg);
+    border: 2px solid var(--pink-border);
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 260ms var(--ease-out-smooth),
+      transform 260ms var(--ease-out-smooth);
+  }
+  .bookshelf:hover .now-reading,
+  .bookshelf:focus-within .now-reading {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  .nr-label {
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .nr-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--pink-ink);
+  }
+  .nr-author {
+    font-size: 0.68rem;
+    color: var(--pink-border);
+  }
+</style>

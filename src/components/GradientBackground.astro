@@ -1,0 +1,83 @@
+---
+---
+
+<div class="gradient-bg" data-gradient-bg aria-hidden="true"></div>
+
+<style>
+  .gradient-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+    pointer-events: none;
+    /* fallback tone before the shader paints — exactly the paper colour */
+    background: var(--paper);
+    /* blend comes from colorBack matching --paper; keep it muted */
+    opacity: 0.8;
+  }
+  .gradient-bg :global(canvas) {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+</style>
+
+<script>
+  import {
+    ShaderMount,
+    grainGradientFragmentShader,
+    GrainGradientShapes,
+    ShaderFitOptions,
+    getShaderColorFromString,
+  } from "@paper-design/shaders";
+
+  const mountEl = document.querySelector<HTMLElement>("[data-gradient-bg]");
+  if (mountEl) {
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    // Muted pink/mauve drift that barely separates from the paper background.
+    // colorBack matches --paper exactly so the shader blends seamlessly; the
+    // colours are only a hair off paper, so it reads as faint movement.
+    const uniforms = {
+      // sizing
+      u_fit: ShaderFitOptions.none,
+      u_scale: 1,
+      u_rotation: 0,
+      u_originX: 0.5,
+      u_originY: 0.5,
+      u_offsetX: 0,
+      u_offsetY: 0,
+      u_worldWidth: 0,
+      u_worldHeight: 0,
+      // grain gradient
+      u_colorBack: getShaderColorFromString("#f5f1e8"),
+      // barely-there warm tints sitting right next to the paper tone —
+      // de-purpled (warm rose/taupe, not lilac), analogous, very low
+      // saturation so it's a faint wash rather than a colour field
+      u_colors: [
+        getShaderColorFromString("#f3e6e3"), // faint blush
+        getShaderColorFromString("#f1e2e1"), // faint rose
+        getShaderColorFromString("#efe1dc"), // faint warm taupe
+      ],
+      u_colorsCount: 3,
+      u_softness: 0.95,
+      u_intensity: 0.3,
+      u_noise: 0,
+      u_shape: GrainGradientShapes.corners,
+    };
+
+    // A slow ambient colour wash, even under reduced-motion (it's not the
+    // kind of motion that setting targets). Tweak to taste.
+    const speed = reduceMotion ? 0.15 : 0.6;
+
+    new ShaderMount(
+      mountEl,
+      grainGradientFragmentShader,
+      uniforms,
+      undefined,
+      speed,
+    );
+  }
+</script>

@@ -1,0 +1,206 @@
+---
+import { getEntry } from "astro:content";
+
+interface Props {
+  x: string;
+  y: string;
+  rot?: string;
+  scale?: number;
+  entry?: string;
+}
+const { x, y, rot = "0deg", scale = 1, entry: entryId = "tree" } = Astro.props;
+const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
+
+const entry = await getEntry("practice", entryId);
+const { label, repoUrl, tree } = entry!.data;
+---
+
+<a
+  class="object practice"
+  href={repoUrl}
+  target="_blank"
+  rel="noopener"
+  style={style}
+  aria-label={`${label} — open in GitHub`}
+>
+  <div class="card">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 14" height="22" width="22">
+      <path
+        fill="#b18597"
+        d="M16.2 1.75H8.1L6.3 0H1.8C0.81 0 0 0.7875 0 1.75V12.25C0 13.2125 0.81 14 1.8 14H15.165L18 9.1875V3.5C18 2.5375 17.19 1.75 16.2 1.75Z"
+      ></path>
+      <path
+        fill="#e7c0cf"
+        d="M16.2 2H1.8C0.81 2 0 2.77143 0 3.71429V12.2857C0 13.2286 0.81 14 1.8 14H16.2C17.19 14 18 13.2286 18 12.2857V3.71429C18 2.77143 17.19 2 16.2 2Z"
+      ></path>
+    </svg>
+    <span class="label">{label}</span>
+  </div>
+  <span class="hover-bridge" aria-hidden="true"></span>
+  <div class="tree" role="tooltip">
+    <div class="tree-card">
+      <ul>
+        {tree.map((item: { depth: number; icon: string; name: string }) => (
+          <li style={`padding-left:${0.5 + item.depth * 1.0}rem`}>
+            <span class="icon">{item.icon}</span>
+            <span class="name">{item.name}</span>
+          </li>
+        ))}
+      </ul>
+      <div class="tree-footer">
+        <span>↗</span> click to open the repo
+      </div>
+    </div>
+  </div>
+</a>
+
+<style>
+  .practice {
+    display: inline-block;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    /* Override .object hover scale so dropdown geometry stays stable; lift is on the card itself */
+    transition: transform 340ms var(--ease-out-smooth), opacity 600ms ease-out;
+  }
+  .practice:hover,
+  .practice:focus-visible {
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+    z-index: 50;
+  }
+
+  /* card = the same "pushable" 3D face as .push-btn */
+  .card {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.85em 1.2em;
+    background: var(--pink-bg);
+    border: 2px solid var(--pink-border);
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--pink-ink);
+    transform-style: preserve-3d;
+    transition:
+      transform 150ms var(--ease-push),
+      background 150ms var(--ease-push);
+  }
+  .card::before {
+    position: absolute;
+    content: "";
+    inset: 0;
+    background: var(--pink-face);
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px var(--pink-border), 0 0.6em 0 0 var(--pink-shadow);
+    transform: translate3d(0, 0.6em, -1em);
+    transition:
+      transform 150ms var(--ease-push),
+      box-shadow 150ms var(--ease-push);
+  }
+  /* hover: ease the button down a touch as the tree opens */
+  .practice:hover .card,
+  .practice:focus-visible .card {
+    background: var(--pink-bg-hover);
+    transform: translate(0, 0.2em);
+  }
+  .practice:hover .card::before,
+  .practice:focus-visible .card::before {
+    box-shadow: 0 0 0 2px var(--pink-border), 0 0.45em 0 0 var(--pink-shadow);
+    transform: translate3d(0, 0.45em, -1em);
+  }
+  /* active: full press */
+  .practice:active .card {
+    transform: translate(0, 0.6em);
+  }
+  .practice:active .card::before {
+    box-shadow: 0 0 0 2px var(--pink-border), 0 0 var(--pink-shadow);
+    transform: translate3d(0, 0, -1em);
+  }
+
+  /* Invisible hover bridge below the card — keeps :hover alive across the gap
+     (tall enough to clear the 3D depth + the tree offset). */
+  .hover-bridge {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 22px;
+    z-index: 49;
+  }
+
+  .tree {
+    position: absolute;
+    top: calc(100% + 16px);
+    left: 0;
+    width: 19rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 320ms var(--ease-out-smooth);
+    z-index: 50;
+  }
+  .practice:hover .tree,
+  .practice:focus-within .tree {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* dropdown panel in the same pink/mauve language: 2px mauve border + hard offset block */
+  .tree-card {
+    background: var(--pink-bg);
+    border: 2px solid var(--pink-border);
+    border-radius: var(--radius);
+    box-shadow: 0 0.6em 0 -0.1em var(--pink-shadow);
+    transform: translateY(-6px);
+    transition: transform 360ms var(--ease-out-smooth);
+    overflow: hidden;
+  }
+  .practice:hover .tree-card,
+  .practice:focus-within .tree-card {
+    transform: translateY(0);
+  }
+
+  .tree ul {
+    list-style: none;
+    margin: 0;
+    padding: 12px 8px 8px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--pink-ink);
+  }
+  .tree li {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tree li:hover {
+    background: var(--pink-face);
+  }
+  .tree .icon {
+    flex-shrink: 0;
+  }
+  .tree .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tree-footer {
+    padding: 8px 12px 10px;
+    border-top: 2px solid var(--pink-border);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--pink-ink);
+  }
+</style>

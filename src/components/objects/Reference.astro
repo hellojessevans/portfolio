@@ -1,0 +1,167 @@
+---
+import { getCollection } from "astro:content";
+
+interface Props {
+  x: string;
+  y: string;
+  rot?: string;
+  scale?: number;
+}
+const { x, y, rot = "0deg", scale = 1 } = Astro.props;
+const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
+
+const refs = (await getCollection("references")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const ref = refs[0];
+---
+
+{ref && (
+  <div class="object reference" style={style} data-reference>
+    <div class="quote-bubble" data-ref-quote>
+      <p class="quote-text">{ref.data.quote}</p>
+    </div>
+
+    <button class="avatar-btn" aria-label={`Reference from ${ref.data.name}`} data-ref-toggle>
+      <div class="avatar-ring">
+        <img src={ref.data.avatar} alt={ref.data.name} class="avatar-img" />
+      </div>
+    </button>
+
+    <div class="ref-name" data-ref-name>
+      <strong>{ref.data.name}</strong>
+      <span class="ref-role">{ref.data.role}</span>
+    </div>
+  </div>
+)}
+
+<style>
+  .reference {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .reference:hover {
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+  }
+
+  .avatar-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 300ms var(--ease-out-smooth);
+  }
+  .avatar-btn:hover {
+    transform: scale(1.08);
+  }
+
+  .avatar-ring {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--pink-border);
+    padding: 2px;
+    background: var(--pink-bg);
+    transition: box-shadow 300ms var(--ease-out-smooth);
+  }
+  .reference.is-open .avatar-ring {
+    box-shadow: 0 0 0 3px var(--pink-face);
+  }
+
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--pink-shadow);
+  }
+
+  .quote-bubble {
+    position: relative;
+    background: var(--pink-bg);
+    border: 2px solid var(--pink-border);
+    border-radius: 12px;
+    padding: 0.75rem 0.9rem;
+    max-width: 200px;
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+    transition:
+      opacity 300ms var(--ease-out-smooth),
+      transform 300ms var(--ease-out-smooth);
+    pointer-events: none;
+  }
+  .reference.is-open .quote-bubble {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .quote-bubble::after {
+    content: "";
+    position: absolute;
+    bottom: -7px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 12px;
+    height: 12px;
+    background: var(--pink-bg);
+    border-right: 2px solid var(--pink-border);
+    border-bottom: 2px solid var(--pink-border);
+  }
+
+  .quote-text {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--pink-ink);
+    font-style: italic;
+  }
+
+  .ref-name {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.05rem;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition:
+      opacity 260ms var(--ease-out-smooth) 60ms,
+      transform 260ms var(--ease-out-smooth) 60ms;
+    pointer-events: none;
+  }
+  .reference.is-open .ref-name {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .ref-name strong {
+    font-size: 0.8rem;
+    color: var(--ink);
+  }
+  .ref-role {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--ink-soft);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-reference]").forEach((el) => {
+    const btn = el.querySelector<HTMLButtonElement>("[data-ref-toggle]");
+    if (!btn) return;
+
+    btn.addEventListener("click", () => {
+      el.classList.toggle("is-open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!el.contains(e.target as Node)) {
+        el.classList.remove("is-open");
+      }
+    });
+  });
+</script>
