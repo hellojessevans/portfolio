@@ -608,8 +608,40 @@ for (let j = 0; j < outerCount; j++) {
     max-width: 100%;
     border-radius: 8px;
     margin: 2rem 0;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    cursor: zoom-in;
+  }
+
+  /* lightbox zoom (global because element is created dynamically) */
+  :global(.cs-lightbox) {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    cursor: zoom-out;
+    animation: lbFadeIn 200ms ease;
+    transition: opacity 150ms ease;
+  }
+  :global(.cs-lightbox::backdrop) {
+    background: transparent;
+  }
+  @keyframes lbFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  :global(.cs-lightbox img) {
+    max-width: 92vw;
+    max-height: 92vh;
+    object-fit: contain;
+    border-radius: 4px;
   }
 </style>
 
@@ -707,6 +739,27 @@ for (let j = 0; j < outerCount; j++) {
     btn.addEventListener("click", () => {
       const overlay = btn.closest("dialog") as HTMLDialogElement | null;
       overlay?.close();
+    });
+  });
+
+  /* lightbox: click image to zoom, click again to close */
+  function closeLightbox(lb: HTMLDialogElement) {
+    lb.style.opacity = "0";
+    setTimeout(() => { lb.close(); lb.remove(); }, 150);
+  }
+
+  document.querySelectorAll(".cs-overlay-body img").forEach((img) => {
+    img.addEventListener("click", () => {
+      const lb = document.createElement("dialog");
+      lb.className = "cs-lightbox";
+      const clone = document.createElement("img");
+      clone.src = (img as HTMLImageElement).src;
+      clone.alt = (img as HTMLImageElement).alt;
+      lb.appendChild(clone);
+      lb.addEventListener("click", () => closeLightbox(lb));
+      lb.addEventListener("cancel", (e) => { e.preventDefault(); closeLightbox(lb); });
+      document.body.appendChild(lb);
+      lb.showModal();
     });
   });
 </script>
