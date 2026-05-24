@@ -43,9 +43,11 @@ const caseStudies = defineCollection({
   schema: z.object({
     title: z.string(),
     summary: z.string(),
+    company: z.string().optional(),
     year: z.number().int().optional(),
     role: z.string().optional(),
     href: z.string().url().optional(),
+    comingSoon: z.boolean().optional(),
     order: z.number().int().default(0),
   }),
 });

@@ -1,6 +1,5 @@
 ---
 import { getCollection } from "astro:content";
-import Popover from "~/components/Popover.astro";
 
 interface Props {
   x: string;
@@ -14,47 +13,155 @@ const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
 const studies = (await getCollection("caseStudies")).sort(
   (a, b) => a.data.order - b.data.order,
 );
+
+/* pre-render markdown bodies for the overlay */
+const rendered = await Promise.all(
+  studies.map(async (s) => {
+    const { Content } = await s.render();
+    return { slug: s.slug, data: s.data, Content };
+  }),
+);
+
+/* ---- radial pill positions (build-time) ----
+   Two concentric arcs with independent angle ranges so
+   same-ring pills are far enough apart to avoid overlap.
+   Inner ring (even indices): 5 pills, closer to folder.
+   Outer ring (odd indices):  4 pills, further out, offset. */
+const INNER_R = 310;
+const OUTER_R = 480;
+const COUNT = studies.length;
+const innerCount = Math.ceil(COUNT / 2);  // 5
+const outerCount = Math.floor(COUNT / 2); // 4
+
+const positions: { x: number; y: number }[] = new Array(COUNT);
+
+// Inner ring: arc 182°→340° (even indices)
+const innerStart = 182;
+const innerEnd = 340;
+const innerStep = (innerEnd - innerStart) / (innerCount - 1);
+for (let j = 0; j < innerCount; j++) {
+  const angle = innerStart + j * innerStep;
+  positions[j * 2] = {
+    x: Math.round(Math.cos((angle * Math.PI) / 180) * INNER_R),
+    y: Math.round(Math.sin((angle * Math.PI) / 180) * INNER_R),
+  };
+}
+
+// Outer ring: arc 215°→305° (odd indices, pushed out to avoid inner overlap)
+const outerStart = 215;
+const outerEnd = 305;
+const outerStep = (outerEnd - outerStart) / (outerCount - 1);
+for (let j = 0; j < outerCount; j++) {
+  const angle = outerStart + j * outerStep;
+  positions[j * 2 + 1] = {
+    x: Math.round(Math.cos((angle * Math.PI) / 180) * OUTER_R),
+    y: Math.round(Math.sin((angle * Math.PI) / 180) * OUTER_R),
+  };
+}
 ---
 
-<button
-  class="object case-folder"
-  style={style}
-  data-case-folder
-  aria-label="Open case studies"
->
-  <div class="file">
-    <div class="work-5"></div>
-    <div class="work-4"></div>
-    <div class="work-3"></div>
-    <div class="work-2"></div>
-    <div class="work-1"></div>
-  </div>
-  <span class="folder-label">Case Studies</span>
-</button>
+<!-- backdrop (outside .object so position:fixed works) -------------------- -->
+<div class="radial-backdrop" data-radial-backdrop></div>
 
-<Popover id="case-studies" title="Case studies">
-  <ul class="cs-list">
-    {studies.map((s) => (
-      <li>
-        <strong>{s.data.title}</strong>
-        {(s.data.year || s.data.role) && (
-          <span class="cs-meta">
-            {s.data.year}
-            {s.data.year && s.data.role ? " · " : ""}
-            {s.data.role}
-          </span>
-        )}
-        <span class="cs-summary">{s.data.summary}</span>
-        {s.data.href && (
-          <a href={s.data.href} target="_blank" rel="noopener">read the full thing ↗</a>
-        )}
-      </li>
+<!-- folder + radial menu -------------------------------------------------- -->
+<div class="object case-folder-wrap" style={style} data-folder-wrap>
+  <button
+    class="case-folder"
+    data-case-folder
+    aria-label="Open case studies"
+    aria-expanded="false"
+  >
+    <div class="file">
+      <div class="work-5"></div>
+      <div class="work-4"></div>
+      <div class="work-3"></div>
+      <div class="work-2"></div>
+      <div class="work-1"></div>
+    </div>
+    <span class="folder-label">Case Studies</span>
+  </button>
+
+  <div class="radial-ring" data-radial-ring>
+    {studies.map((s, i) => (
+      <button
+        class:list={["radial-pill", { "radial-pill--disabled": s.data.comingSoon }]}
+        style={`--i:${i}; --pill-x:${positions[i].x}px; --pill-y:${positions[i].y}px;`}
+        data-cs-slug={s.data.comingSoon ? undefined : s.slug}
+        type="button"
+        disabled={s.data.comingSoon}
+        tabindex="-1"
+      >
+        {s.data.company && <span class="pill-company">{s.data.company}</span>}
+        <span class="pill-title">{s.data.title}</span>
+        {s.data.comingSoon && <span class="pill-coming-soon">Coming soon</span>}
+      </button>
     ))}
-  </ul>
-</Popover>
+  </div>
+</div>
 
+<!-- full-screen overlay per case study ------------------------------------ -->
+{rendered.filter(({ data }) => !data.comingSoon).map(({ slug, data, Content }) => (
+  <dialog class="cs-overlay" id={`cs-${slug}`} data-cs-overlay>
+    <div class="cs-overlay-scroll">
+      <nav class="cs-overlay-nav">
+        <button class="cs-back" type="button" data-cs-back>&larr; Case Studies</button>
+        <button class="cs-overlay-close" type="button" aria-label="Close" data-cs-close>&times;</button>
+      </nav>
+
+      <header class="cs-overlay-header">
+        <div class="cs-overlay-header-inner">
+          <p class="cs-overlay-meta">
+            {data.company}
+            {data.company && data.year ? " · " : ""}
+            {data.year}
+            {(data.company || data.year) && data.role ? " · " : ""}
+            {data.role}
+          </p>
+          <h2 class="cs-overlay-title">{data.title}</h2>
+          <p class="cs-overlay-summary">{data.summary}</p>
+        </div>
+      </header>
+
+      <div class="cs-overlay-body">
+        <Content />
+      </div>
+    </div>
+  </dialog>
+))}
+
+<!-- styles ---------------------------------------------------------------- -->
 <style>
+  /* ---- backdrop ---- */
+  .radial-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(20, 18, 14, 0.25);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 300ms ease;
+  }
+  .radial-backdrop[data-open] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ---- folder wrapper ---- */
+  .case-folder-wrap {
+    z-index: 1;
+  }
+  .case-folder-wrap:hover {
+    /* neutralise global .object hover-scale */
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+  }
+  .case-folder-wrap[data-open] {
+    z-index: 100;
+  }
+
+  /* ---- folder button ---- */
   .case-folder {
+    position: relative;
     width: 240px;
     height: 200px;
     background: none;
@@ -65,13 +172,9 @@ const studies = (await getCollection("caseStudies")).sort(
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-  }
-  /* neutralise the global .object hover-scale so the folder's own 3D hover is clean */
-  .case-folder:hover {
-    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+    z-index: 2;
   }
 
-  /* --- folder (after Cobp, Uiverse) — recoloured to the pink/mauve theme --- */
   .file {
     position: relative;
     width: 240px;
@@ -115,13 +218,12 @@ const studies = (await getCollection("caseStudies")).sort(
     background: var(--pink-border);
     clip-path: polygon(0 35%, 0% 100%, 50% 100%);
   }
-  .case-folder:hover .work-5 {
+  .case-folder:hover .work-5,
+  [data-open] .work-5 {
     box-shadow: 0 20px 40px rgba(80, 50, 62, 0.25);
   }
 
-  .work-4,
-  .work-3,
-  .work-2 {
+  .work-4, .work-3, .work-2 {
     position: absolute;
     inset: 4px;
     border-radius: 16px;
@@ -132,9 +234,9 @@ const studies = (await getCollection("caseStudies")).sort(
   .work-4 { background: #e7d3da; }
   .work-3 { background: #f0e1e6; }
   .work-2 { background: #f9eef1; }
-  .case-folder:hover .work-4 { transform: rotateX(-20deg); }
-  .case-folder:hover .work-3 { transform: rotateX(-30deg); }
-  .case-folder:hover .work-2 { transform: rotateX(-38deg); }
+  .case-folder:hover .work-4, [data-open] .work-4 { transform: rotateX(-20deg); }
+  .case-folder:hover .work-3, [data-open] .work-3 { transform: rotateX(-30deg); }
+  .case-folder:hover .work-2, [data-open] .work-2 { transform: rotateX(-38deg); }
 
   .work-1 {
     position: absolute;
@@ -170,7 +272,8 @@ const studies = (await getCollection("caseStudies")).sort(
     background: var(--pink-face);
     clip-path: polygon(100% 14%, 50% 100%, 100% 100%);
   }
-  .case-folder:hover .work-1 {
+  .case-folder:hover .work-1,
+  [data-open] .work-1 {
     box-shadow:
       inset 0 20px 40px var(--pink-face),
       inset 0 -20px 40px var(--pink-border);
@@ -192,48 +295,418 @@ const studies = (await getCollection("caseStudies")).sort(
       transform 260ms var(--ease-out-smooth);
   }
   .case-folder:hover .folder-label,
-  .case-folder:focus-visible .folder-label {
+  .case-folder:focus-visible .folder-label,
+  [data-open] .folder-label {
     opacity: 1;
     transform: translateY(0);
   }
 
-  .cs-list {
-    list-style: none;
-    margin: 0;
+  /* ---- radial ring ---- */
+  .radial-ring {
+    position: absolute;
+    left: 120px;  /* center of 240px folder */
+    top: 80px;    /* center of 160px file area */
+    z-index: 1;
+    /* undo parent .object rotation and scale so pills are axis-aligned,
+       then shift left because folder sits at 70% from viewport left */
+    transform: rotate(calc(-1 * var(--rot, 0deg))) scale(calc(1 / var(--scale, 1))) translateX(-110px);
+    pointer-events: none;
+  }
+  [data-open] .radial-ring {
+    pointer-events: auto;
+  }
+
+  /* ---- radial pills (push-btn style with chin, no bottom shadow) ---- */
+  .radial-pill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    /* closed state: centered at origin, invisible */
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    /* close animation: reverse stagger (last pill first) */
+    --close-delay: calc((8 - var(--i, 0)) * 30ms);
+    transition:
+      transform 280ms ease-in var(--close-delay),
+      opacity 180ms ease var(--close-delay);
+
+    /* push-btn visual style */
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 0.55em 1em;
+    background: var(--pink-bg);
+    border: 2px solid var(--pink-border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    color: var(--pink-ink);
+    text-align: center;
+    transform-style: preserve-3d;
+  }
+  /* 3D chin (no bottom shadow, just the chin face + border outline) */
+  .radial-pill::before {
+    position: absolute;
+    content: "";
+    inset: 0;
+    background: var(--pink-face);
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px var(--pink-border);
+    transform: translate3d(0, 0.5em, -1em);
+    transition: none;
+  }
+
+  /* open state: spring-out to computed position */
+  [data-open] .radial-pill {
+    --open-delay: calc(var(--i, 0) * 55ms);
+    transform: translate(-50%, -50%) translate(var(--pill-x), var(--pill-y)) scale(1);
+    opacity: 1;
+    transition:
+      transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--open-delay),
+      opacity 220ms ease var(--open-delay);
+  }
+  /* after fan-out settles, use fast transitions for hover in/out */
+  [data-open].settled .radial-pill {
+    transition: transform 150ms var(--ease-push), background 150ms var(--ease-push);
+  }
+  [data-open] .radial-pill::before {
+    transition: transform 150ms var(--ease-push);
+  }
+
+  /* hover: push button DOWN into chin (150ms to match chin timing) */
+  .radial-pill:hover {
+    background: var(--pink-bg-hover);
+    transform: translate(-50%, -50%) translate(var(--pill-x), var(--pill-y)) scale(1) translateY(0.2em);
+    transition: transform 150ms var(--ease-push), background 150ms var(--ease-push);
+  }
+  .radial-pill:hover::before {
+    transform: translate3d(0, 0.3em, -1em);
+  }
+  /* active: fully pressed */
+  .radial-pill:active {
+    background: var(--pink-bg-hover);
+    transform: translate(-50%, -50%) translate(var(--pill-x), var(--pill-y)) scale(1) translateY(0.5em);
+    transition: transform 150ms var(--ease-push), background 150ms var(--ease-push);
+  }
+  .radial-pill:active::before {
+    transform: translate3d(0, 0, -1em);
+  }
+  .radial-pill:focus-visible {
+    outline: 2px solid var(--pink-border);
+    outline-offset: 3px;
+  }
+
+  .pill-company {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--pink-border);
+    line-height: 1;
+  }
+
+  .pill-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: var(--pink-ink);
+  }
+
+  .pill-coming-soon {
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pink-border);
+    line-height: 1;
+    margin-top: 3px;
+  }
+
+  /* disabled / coming-soon pill — flat (no chin) */
+  .radial-pill--disabled {
+    opacity: 0;
+    cursor: default;
+    background: var(--pink-bg);
+    border-color: #d4c4c9;
+  }
+  .radial-pill--disabled::before {
+    display: none;
+  }
+  [data-open] .radial-pill--disabled {
+    opacity: 0.85;
+  }
+  .radial-pill--disabled:hover {
+    background: var(--pink-bg);
+    transform: translate(-50%, -50%) translate(var(--pill-x), var(--pill-y)) scale(1);
+    transition: none;
+  }
+  .radial-pill--disabled .pill-company,
+  .radial-pill--disabled .pill-title {
+    color: var(--pink-ink);
+    opacity: 0.5;
+  }
+  .radial-pill--disabled .pill-coming-soon {
+    opacity: 0.5;
+  }
+
+  /* ---- full-screen overlay ---- */
+  .cs-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border: none;
     padding: 0;
+    margin: 0;
+    background: var(--paper-warm);
+    overflow: hidden;
+  }
+  .cs-overlay::backdrop {
+    background: rgba(20, 18, 14, 0.4);
+  }
+  .cs-overlay[open] {
+    animation: overlayIn 320ms ease-out;
+  }
+  @keyframes overlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .cs-overlay-scroll {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cs-overlay-nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: 1.25rem 2.5rem;
+    background: var(--paper-warm);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
+    justify-content: space-between;
+    align-items: center;
   }
-  .cs-list li {
+
+  .cs-back {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    padding: 0.25rem 0;
+    transition: color 150ms;
+  }
+  .cs-back:hover {
+    color: var(--ink);
+  }
+
+  .cs-overlay-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--ink-soft);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: color 150ms, background 150ms;
+  }
+  .cs-overlay-close:hover {
+    color: var(--ink);
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .cs-overlay-header {
+    padding: 3rem 2.5rem 2.5rem;
     display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
+    justify-content: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
-  .cs-list strong {
-    font-size: 0.95rem;
+
+  .cs-overlay-header-inner {
+    width: 100%;
+    max-width: 720px;
   }
-  .cs-meta {
+
+  .cs-overlay-meta {
     font-family: var(--font-mono);
     font-size: 0.7rem;
-    color: var(--ink-soft);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--pink-border);
+    margin: 0 0 0.75rem;
   }
-  .cs-summary {
+
+  .cs-overlay-title {
+    font-family: var(--font-serif);
+    font-size: 2.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 0.75rem;
+    color: var(--ink);
+  }
+
+  .cs-overlay-summary {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
     color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .cs-overlay-body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2.5rem 2.5rem 5rem;
+    font-family: var(--font-mono);
     font-size: 0.85rem;
-    line-height: 1.5;
+    line-height: 1.8;
+    color: var(--ink);
   }
-  .cs-list a {
-    font-size: 0.8rem;
+  .cs-overlay-body :global(h2) {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 3rem 0 1rem;
+    color: var(--ink);
+  }
+  .cs-overlay-body :global(h2:first-child) {
+    margin-top: 0;
+  }
+  .cs-overlay-body :global(p) {
+    margin: 0 0 1.25rem;
+  }
+  .cs-overlay-body :global(ul),
+  .cs-overlay-body :global(ol) {
+    margin: 0 0 1.25rem;
+    padding-left: 1.25rem;
+  }
+  .cs-overlay-body :global(li) {
+    margin-bottom: 0.4rem;
+  }
+  .cs-overlay-body :global(strong) {
+    font-weight: 700;
+  }
+  .cs-overlay-body :global(a) {
     color: var(--accent);
+  }
+  .cs-overlay-body :global(img) {
+    display: block;
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 2rem 0;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   }
 </style>
 
+<!-- script ---------------------------------------------------------------- -->
 <script>
-  document.querySelectorAll<HTMLButtonElement>("[data-case-folder]").forEach((btn) => {
+  const folder = document.querySelector<HTMLButtonElement>("[data-case-folder]");
+  const wrap = document.querySelector<HTMLDivElement>("[data-folder-wrap]");
+  const backdrop = document.querySelector<HTMLDivElement>("[data-radial-backdrop]");
+  const ring = document.querySelector<HTMLDivElement>("[data-radial-ring]");
+  const pills = document.querySelectorAll<HTMLButtonElement>(".radial-pill");
+  let isOpen = false;
+
+  let settledTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function openMenu() {
+    if (isOpen) return;
+    isOpen = true;
+    wrap?.setAttribute("data-open", "");
+    backdrop?.setAttribute("data-open", "");
+    folder?.setAttribute("aria-expanded", "true");
+    pills.forEach((p) => {
+      if (!p.disabled) p.setAttribute("tabindex", "0");
+    });
+    settledTimer = setTimeout(() => wrap?.classList.add("settled"), 600);
+  }
+
+  function closeMenu() {
+    if (!isOpen) return;
+    isOpen = false;
+    if (settledTimer) { clearTimeout(settledTimer); settledTimer = null; }
+    wrap?.classList.remove("settled");
+    wrap?.removeAttribute("data-open");
+    backdrop?.removeAttribute("data-open");
+    folder?.setAttribute("aria-expanded", "false");
+    pills.forEach((p) => p.setAttribute("tabindex", "-1"));
+  }
+
+  /* folder click toggles menu */
+  folder?.addEventListener("click", () => {
+    isOpen ? closeMenu() : openMenu();
+  });
+
+  /* backdrop click closes */
+  backdrop?.addEventListener("click", closeMenu);
+
+  /* escape key closes */
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isOpen) {
+      e.preventDefault();
+      closeMenu();
+    }
+  });
+
+  /* pill click → close menu, open overlay */
+  pills.forEach((pill) => {
+    pill.addEventListener("click", () => {
+      const slug = pill.dataset.csSlug;
+      if (!slug) return;
+      closeMenu();
+      requestAnimationFrame(() => {
+        const overlay = document.getElementById(`cs-${slug}`) as HTMLDialogElement | null;
+        overlay?.showModal();
+      });
+    });
+  });
+
+  /* arrow key navigation among pills */
+  ring?.addEventListener("keydown", (e) => {
+    if (!isOpen) return;
+    const activePills = Array.from(pills).filter((p) => !p.disabled);
+    const current = document.activeElement as HTMLButtonElement;
+    const idx = activePills.indexOf(current);
+    if (idx === -1) return;
+
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      activePills[(idx + 1) % activePills.length]?.focus();
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      activePills[(idx - 1 + activePills.length) % activePills.length]?.focus();
+    }
+  });
+
+  /* overlay back button → close overlay, re-open radial menu */
+  document.querySelectorAll<HTMLButtonElement>("[data-cs-back]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const dlg = document.getElementById("case-studies") as HTMLDialogElement | null;
-      dlg?.showModal();
+      const overlay = btn.closest("dialog") as HTMLDialogElement | null;
+      overlay?.close();
+      requestAnimationFrame(() => openMenu());
+    });
+  });
+
+  /* overlay close button → close overlay, back to main page */
+  document.querySelectorAll<HTMLButtonElement>("[data-cs-close]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const overlay = btn.closest("dialog") as HTMLDialogElement | null;
+      overlay?.close();
     });
   });
 </script>
