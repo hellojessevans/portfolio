@@ -8,7 +8,7 @@ tools:
     note: for the wags and the wobbles
   - name: Howler.js
     href: https://howlerjs.com
-    note: for the woofs and the vinyl crackle
+    note: for the woofs and the drips
   - name: Claude Code
     href: https://claude.com/claude-code
     note: collaborator on this whole thing
@@ -17,7 +17,7 @@ tools:
     note: CV + case studies
   - name: 21st.dev
     href: https://21st.dev
-    note: the buttons that go boop and the folder that goes whoosh
+    note: for the soft buttons and opening folders
   - name: Cloudflare Pages
     href: https://pages.cloudflare.com
     note: hosting, free tier
