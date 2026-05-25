@@ -100,34 +100,53 @@ for (let j = 0; j < outerCount; j++) {
 </div>
 
 <!-- full-screen overlay per case study ------------------------------------ -->
-{rendered.filter(({ data }) => !data.comingSoon).map(({ slug, data, Content }) => (
-  <dialog class="cs-overlay" id={`cs-${slug}`} data-cs-overlay>
-    <div class="cs-overlay-scroll">
-      <nav class="cs-overlay-nav">
-        <button class="cs-back" type="button" data-cs-back>&larr; Case Studies</button>
-        <button class="cs-overlay-close" type="button" aria-label="Close" data-cs-close>&times;</button>
-      </nav>
+{rendered.filter(({ data }) => !data.comingSoon).map(({ slug, data, Content }, idx, arr) => {
+  const prev = idx > 0 ? arr[idx - 1] : null;
+  const next = idx < arr.length - 1 ? arr[idx + 1] : null;
+  return (
+    <dialog class="cs-overlay" id={`cs-${slug}`} data-cs-overlay>
+      <div class="cs-overlay-scroll">
+        <nav class="cs-overlay-nav">
+          <button class="cs-back" type="button" data-cs-back>&larr; Case Studies</button>
+          <button class="cs-overlay-close" type="button" aria-label="Close" data-cs-close>&times;</button>
+        </nav>
 
-      <header class="cs-overlay-header">
-        <div class="cs-overlay-header-inner">
-          <p class="cs-overlay-meta">
-            {data.company}
-            {data.company && data.year ? " · " : ""}
-            {data.year}
-            {(data.company || data.year) && data.role ? " · " : ""}
-            {data.role}
-          </p>
-          <h2 class="cs-overlay-title">{data.title}</h2>
-          <p class="cs-overlay-summary">{data.summary}</p>
+        <header class="cs-overlay-header">
+          <div class="cs-overlay-header-inner">
+            <p class="cs-overlay-meta">
+              {data.company}
+              {data.company && data.year ? " · " : ""}
+              {data.year}
+              {(data.company || data.year) && data.role ? " · " : ""}
+              {data.role}
+            </p>
+            <h2 class="cs-overlay-title">{data.title}</h2>
+            <p class="cs-overlay-summary">{data.summary}</p>
+          </div>
+        </header>
+
+        <div class="cs-overlay-body">
+          <Content />
         </div>
-      </header>
 
-      <div class="cs-overlay-body">
-        <Content />
+        <nav class="cs-pagination">
+          {prev ? (
+            <button class="cs-pagination-btn" type="button" data-cs-nav={prev.slug}>
+              <span class="cs-pagination-dir">&larr; Previous</span>
+              <span class="cs-pagination-label">{prev.data.title}</span>
+            </button>
+          ) : <span />}
+          {next ? (
+            <button class="cs-pagination-btn cs-pagination-next" type="button" data-cs-nav={next.slug}>
+              <span class="cs-pagination-dir">Next &rarr;</span>
+              <span class="cs-pagination-label">{next.data.title}</span>
+            </button>
+          ) : <span />}
+        </nav>
       </div>
-    </div>
-  </dialog>
-))}
+    </dialog>
+  );
+})}
 
 <!-- styles ---------------------------------------------------------------- -->
 <style>
@@ -644,13 +663,67 @@ for (let j = 0; j < outerCount; j++) {
     border-radius: 4px;
   }
 
-  /* ---- mobile: radial → vertical list ---- */
+  /* ---- prev / next pagination ---- */
+  .cs-pagination {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 2.5rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding-top: 2rem;
+  }
+  .cs-pagination-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    text-align: left;
+    padding: 0.25rem 0;
+    transition: color 150ms;
+  }
+  .cs-pagination-btn:hover {
+    color: var(--ink);
+  }
+  .cs-pagination-next {
+    text-align: right;
+    align-items: flex-end;
+    margin-left: auto;
+  }
+  .cs-pagination-dir {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    transition: color 150ms;
+  }
+  .cs-pagination-btn:hover .cs-pagination-dir {
+    color: var(--ink);
+  }
+  .cs-pagination-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    line-height: 1.3;
+    transition: color 150ms;
+  }
+  .cs-pagination-btn:hover .cs-pagination-label {
+    color: var(--ink);
+  }
+
+  /* ---- mobile: tap-to-open overlay list ---- */
   @media (max-width: 899px), (pointer: coarse) {
     .case-folder-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 100%;
     }
     .case-folder {
       width: 180px;
@@ -666,29 +739,53 @@ for (let j = 0; j < outerCount; j++) {
     .work-1::after { width: 110px; height: 12px; }
     .work-1::before { right: 106px; width: 10px; height: 10px; }
 
-    /* hide radial positioning, show as vertical list */
+    /* show folder label by default on mobile */
+    .folder-label {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* pills as centered overlay on tap */
     .radial-ring {
-      position: relative;
-      left: auto;
-      top: auto;
-      transform: none;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      width: 100%;
+      align-items: center;
+      gap: 0.75rem;
+      width: 90vw;
       max-width: 20rem;
-      margin-top: 1rem;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 1rem;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 250ms ease;
     }
+    [data-open] .radial-ring {
+      opacity: 1;
+      /* keep pointer-events: none on the container so taps outside pills
+         fall through to the backdrop; individual pills get auto below */
+    }
+
     .radial-pill {
       position: relative;
       left: auto;
       top: auto;
       transform: none !important;
-      opacity: 1;
-      pointer-events: auto;
+      opacity: 0;
+      pointer-events: none;
       width: 100%;
       white-space: normal;
-      transition: none;
+      transition: none !important;
+    }
+    [data-open] .radial-pill {
+      opacity: 1;
+      pointer-events: auto;
+      transform: none !important;
     }
     .radial-pill:hover {
       transform: none !important;
@@ -702,21 +799,16 @@ for (let j = 0; j < outerCount; j++) {
     .radial-pill:active::before {
       transform: translate3d(0, 0, -1em);
     }
-    [data-open] .radial-pill {
-      transform: none !important;
-      transition: none;
-    }
-    .radial-pill--disabled {
+    [data-open] .radial-pill--disabled {
       opacity: 0.85;
     }
-    /* always show pills on mobile, no need for menu toggle */
-    .radial-backdrop { display: none !important; }
 
     /* overlay responsive padding */
     .cs-overlay-nav { padding: 1rem 1.25rem; }
     .cs-overlay-header { padding: 2rem 1.25rem 1.5rem; }
-    .cs-overlay-body { padding: 1.5rem 1.25rem 3rem; }
+    .cs-overlay-body { padding: 1.5rem 1.25rem 2rem; }
     .cs-overlay-title { font-size: 1.8rem; }
+    .cs-pagination { padding: 0 1.25rem 3rem; }
   }
 </style>
 
@@ -814,6 +906,24 @@ for (let j = 0; j < outerCount; j++) {
     btn.addEventListener("click", () => {
       const overlay = btn.closest("dialog") as HTMLDialogElement | null;
       overlay?.close();
+    });
+  });
+
+  /* prev/next pagination → close current, open target */
+  document.querySelectorAll<HTMLButtonElement>("[data-cs-nav]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetSlug = btn.dataset.csNav;
+      if (!targetSlug) return;
+      const currentOverlay = btn.closest("dialog") as HTMLDialogElement | null;
+      currentOverlay?.close();
+      requestAnimationFrame(() => {
+        const target = document.getElementById(`cs-${targetSlug}`) as HTMLDialogElement | null;
+        if (target) {
+          target.showModal();
+          /* scroll to top of new study */
+          target.querySelector(".cs-overlay-scroll")?.scrollTo(0, 0);
+        }
+      });
     });
   });
 

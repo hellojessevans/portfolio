@@ -114,6 +114,11 @@ body {
   overflow: hidden;
 }
 
+/* Mobile row wrappers: transparent on desktop so absolute children are unaffected */
+.mobile-row {
+  display: contents;
+}
+
 @media (max-width: 899px), (pointer: coarse) {
   body {
     overflow: auto;
@@ -133,23 +138,78 @@ body {
     transform: none !important;
   }
 
-  /* mobile stacking order:
-     how i think, how i work, case studies, music,
-     books, echo, plant, awards, colophon */
-  .practice       { order: 1; }
-  .case-folder-wrap { order: 2; }
-  .record-embed   { order: 3; }
-  .bookshelf      { order: 4; }
-  .echo           { order: 5; }
-  .garden         { order: 6; }
-  .hackathon-card { order: 7; }
-  .colophon       { order: 8; }
+  /* --- mobile row wrappers: side-by-side pairs --- */
+  .mobile-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    width: 100%;
+  }
+
+  /* mobile stacking order */
+  .practice-row      { order: -1; }
+  .record-embed      { order: 1; }
+  .case-folder-wrap  { order: 2; }
+  .awards-plant-row  { order: 3; }
+  .reading-row       { order: 4; }
+  .colophon          { order: 5; }
+
+  /* standalone case studies — centred, extra breathing room below Spotify */
+  .case-folder-wrap.object {
+    transform: none !important;
+    margin-top: 1rem;
+  }
+
+  /* awards + plant row */
+  .awards-plant-row .hackathon-card {
+    flex: 0 0 auto;
+    width: 200px !important;
+  }
+
+  /* subtle tilts — echoes the scattered desktop feel */
+  .practice-row .object:first-child  { transform: rotate(-2deg) !important; }
+  .practice-row .object:last-child   { transform: rotate(2deg) !important; }
+  .record-embed.object     { transform: rotate(1.5deg) !important; }
+  .awards-plant-row .hackathon-card  { transform: rotate(-1.5deg) !important; }
+  .awards-plant-row .garden          { transform: rotate(1.5deg) !important; }
+  .reading-row .bookshelf  { transform: rotate(2deg) !important; }
+  .reading-row .echo       { transform: rotate(-1.5deg) !important; }
+
+  /* standalone spotify — centred, constrained width */
+  .record-embed {
+    width: 300px !important;
+  }
+
+  /* mobile-always labels for interactive objects */
+  .echo[data-label]::after {
+    content: "Tap to feed Echo" !important;
+    opacity: 1 !important;
+    transform: translate(-50%, 6px) !important;
+  }
+  .garden[data-label]::after {
+    content: "Tap to water" !important;
+    opacity: 1 !important;
+    transform: translate(-50%, 6px) !important;
+  }
 
   /* entrance: skip staggered fade-in on mobile */
   .stage .object,
-  .stage .hero {
+  .stage .hero,
+  .stage .mobile-row {
     opacity: 1 !important;
     transition: none !important;
+  }
+}
+
+/* narrowest phones: stack rows that are too wide */
+@media (max-width: 359px) {
+  .awards-plant-row {
+    flex-direction: column !important;
+  }
+  .awards-plant-row .hackathon-card {
+    width: 200px !important;
   }
 }
 

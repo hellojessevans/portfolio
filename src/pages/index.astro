@@ -21,16 +21,24 @@ import HackathonCard from "~/components/objects/HackathonCard.astro";
   <Stage>
     <Hero />
 
-    <Garden x="16%" y="22%" rot="-2deg" />
-    <PracticeFolder x="38%" y="16%" rot="-2deg" />
-    <PracticeFolder entry="skills" x="62%" y="16%" rot="2deg" />
+    <div class="mobile-row practice-row">
+      <PracticeFolder x="38%" y="16%" rot="-2deg" />
+      <PracticeFolder entry="skills" x="62%" y="16%" rot="2deg" />
+    </div>
+
     <RecordPlayer x="86%" y="22%" rot="-4deg" />
 
-    <Bookshelf x="11%" y="57%" rot="2deg" />
-    <Echo x="88%" y="62%" rot="0deg" />
-
-    <HackathonCard x="27%" y="82%" rot="3deg" />
     <CaseStudyPapers x="70%" y="85%" rot="-8deg" scale={0.62} />
+
+    <div class="mobile-row awards-plant-row">
+      <HackathonCard x="27%" y="82%" rot="3deg" />
+      <Garden x="16%" y="22%" rot="-2deg" />
+    </div>
+
+    <div class="mobile-row reading-row">
+      <Bookshelf x="11%" y="57%" rot="2deg" />
+      <Echo x="88%" y="62%" rot="0deg" />
+    </div>
 
     <Colophon x="50%" y="96%" />
   </Stage>

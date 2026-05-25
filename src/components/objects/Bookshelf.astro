@@ -15,7 +15,7 @@ const { challengeYear, challengeGoal, read, currentlyReading } = books!.data;
 const pct = Math.min(100, Math.round((read / challengeGoal) * 100));
 ---
 
-<div class="object bookshelf" style={style} role="group" aria-label={`${challengeYear} reading challenge: ${read} of ${challengeGoal} books read`}>
+<div class="object bookshelf" style={style} role="group" data-bookshelf aria-label={`${challengeYear} reading challenge: ${read} of ${challengeGoal} books read`}>
   <svg
     class="shelf"
     viewBox="0 0 170 150"
@@ -181,8 +181,47 @@ const pct = Math.min(100, Math.round((read / challengeGoal) * 100));
   }
 
   @media (max-width: 899px), (pointer: coarse) {
+    .bookshelf {
+      cursor: pointer;
+    }
     .now-reading {
-      display: none;
+      position: relative;
+      top: auto;
+      left: auto;
+      transform: none;
+      min-width: auto;
+      width: 100%;
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      padding: 0;
+      border-width: 0;
+      transition: all 300ms var(--ease-out-smooth);
+    }
+    /* override desktop hover/focus rules */
+    .bookshelf:hover .now-reading,
+    .bookshelf:focus-within .now-reading {
+      opacity: 0;
+      transform: none;
+    }
+    .bookshelf.now-reading-open .now-reading,
+    .bookshelf.now-reading-open:hover .now-reading {
+      opacity: 1;
+      max-height: 120px;
+      padding: 0.6em 0.9em;
+      border-width: 2px;
+      transform: none;
     }
   }
 </style>
+
+<script>
+  const mobileQuery = window.matchMedia("(max-width: 899px), (pointer: coarse)");
+  if (mobileQuery.matches) {
+    document.querySelectorAll<HTMLElement>("[data-bookshelf]").forEach((shelf) => {
+      shelf.addEventListener("click", () => {
+        shelf.classList.toggle("now-reading-open");
+      });
+    });
+  }
+</script>

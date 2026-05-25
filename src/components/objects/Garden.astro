@@ -31,7 +31,7 @@ function leafPath(attachY: number, dir: 1 | -1, size: number): string {
 }
 ---
 
-<div class="object garden" style={style} data-garden role="group" aria-label="Plant — click to water">
+<div class="object garden" style={style} data-garden data-label="Water" role="group" aria-label="Plant — tap to water">
   <button
     type="button"
     class="plant-area"
@@ -223,6 +223,16 @@ function leafPath(attachY: number, dir: 1 | -1, size: number): string {
   .reset-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.3);
+  }
+
+  @media (max-width: 899px), (pointer: coarse) {
+    .garden {
+      width: auto;
+      padding: 8px;
+    }
+    .plant-area {
+      height: 140px;
+    }
   }
 </style>
 

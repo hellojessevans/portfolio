@@ -391,7 +391,13 @@ const body = intro!.body ?? "";
       font-size: clamp(2.4rem, 10vw, 3.5rem);
     }
     .role {
+      display: block;
       font-size: 0.95rem;
+    }
+    .role::before {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 0.5em;
     }
     .blurb {
       font-size: 0.85rem;
