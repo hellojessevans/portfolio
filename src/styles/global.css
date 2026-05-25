@@ -193,33 +193,3 @@ body.is-ready .stage .object:nth-of-type(9) { transition-delay: 560ms; }
   opacity: 1;
   transform: translate(-50%, 6px);
 }
-
-/* --- whimsical float: firefly-like drift applied via translate/rotate
-   (independent of transform, so hover scale still works) ------------- */
-@keyframes floatDrift {
-  0%, 100% { translate: 0 0; }
-  20%  { translate: var(--fx, 3px) calc(var(--fy, 4px) * -0.6); }
-  45%  { translate: calc(var(--fx, 3px) * -0.7) calc(var(--fy, 4px) * -1); }
-  65%  { translate: calc(var(--fx, 3px) * -1) calc(var(--fy, 4px) * 0.4); }
-  85%  { translate: calc(var(--fx, 3px) * 0.35) var(--fy, 4px); }
-}
-@keyframes floatRock {
-  0%, 100% { rotate: 0deg; }
-  30%  { rotate: var(--fr, 0.5deg); }
-  70%  { rotate: calc(var(--fr, 0.5deg) * -0.7); }
-}
-
-body.is-ready .object[data-float] {
-  animation:
-    floatDrift var(--float-dur, 8s) ease-in-out infinite,
-    floatRock  var(--float-rock-dur, 11s) ease-in-out infinite;
-  animation-delay:
-    var(--float-delay, 0s),
-    var(--float-rock-delay, 0s);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body.is-ready .object[data-float] {
-    animation: none;
-  }
-}

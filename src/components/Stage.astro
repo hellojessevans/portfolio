@@ -5,40 +5,6 @@
   <slot />
 </div>
 
-<script>
-  /* Assign unique float parameters to every .object so each drifts
-     along its own lazy, firefly-like path. Uses two overlapping
-     animations at prime-ratio durations for non-repeating organic feel. */
-  document.querySelectorAll<HTMLElement>(".stage .object").forEach((el) => {
-    const r = () => Math.random();
-
-    // subtle drift amplitude (2-5 px)
-    const fx = (2 + r() * 3).toFixed(1);
-    const fy = (2.5 + r() * 3.5).toFixed(1);
-
-    // gentle rock amplitude (0.3-0.9 deg)
-    const fr = (0.3 + r() * 0.6).toFixed(2);
-
-    // durations — spread wide and use non-round numbers so objects
-    // never sync up. Drift 8-16s, rock 10-20s.
-    const dur = (8 + r() * 8).toFixed(1);
-    const rockDur = (10 + r() * 10).toFixed(1);
-
-    // negative delay → each starts at a random phase of the cycle
-    const delay = -(r() * 30).toFixed(1);
-    const rockDelay = -(r() * 30).toFixed(1);
-
-    el.style.setProperty("--fx", `${fx}px`);
-    el.style.setProperty("--fy", `${fy}px`);
-    el.style.setProperty("--fr", `${fr}deg`);
-    el.style.setProperty("--float-dur", `${dur}s`);
-    el.style.setProperty("--float-rock-dur", `${rockDur}s`);
-    el.style.setProperty("--float-delay", `${delay}s`);
-    el.style.setProperty("--float-rock-delay", `${rockDelay}s`);
-    el.setAttribute("data-float", "");
-  });
-</script>
-
 <style>
   .stage {
     position: fixed;
