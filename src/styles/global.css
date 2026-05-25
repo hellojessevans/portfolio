@@ -118,6 +118,39 @@ body {
   body {
     overflow: auto;
   }
+
+  /* --- mobile: objects stack vertically instead of scattering --- */
+  .object {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: auto;
+    max-width: 100%;
+    overflow: visible;
+  }
+  .object:hover {
+    transform: none !important;
+  }
+
+  /* mobile stacking order:
+     how i think, how i work, case studies, music,
+     books, echo, plant, awards, colophon */
+  .practice       { order: 1; }
+  .case-folder-wrap { order: 2; }
+  .record-embed   { order: 3; }
+  .bookshelf      { order: 4; }
+  .echo           { order: 5; }
+  .garden         { order: 6; }
+  .hackathon-card { order: 7; }
+  .colophon       { order: 8; }
+
+  /* entrance: skip staggered fade-in on mobile */
+  .stage .object,
+  .stage .hero {
+    opacity: 1 !important;
+    transition: none !important;
+  }
 }
 
 button {
