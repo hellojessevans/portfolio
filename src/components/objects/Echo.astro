@@ -57,16 +57,21 @@ const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
       width: 160px;
       height: 190px;
     }
+    .echo[data-label]::after {
+      display: none;
+    }
   }
 </style>
 
 <script>
   import { gsap } from "gsap";
+  import { play } from "~/scripts/sfx";
 
   document.querySelectorAll<HTMLButtonElement>("[data-echo]").forEach((btn) => {
     const bob = btn.querySelector("[data-echo-bob]");
     const treat = btn.querySelector("[data-echo-treat]");
     btn.addEventListener("click", () => {
+      try { play("bark"); } catch {}
       if (bob) {
         gsap.killTweensOf(bob);
         gsap.fromTo(

@@ -36,40 +36,26 @@ export function play(name: SfxName): void {
 function bark(): void {
   const ac = getCtx();
   const t = ac.currentTime;
-  const duration = 0.22;
 
-  const buffer = ac.createBuffer(1, Math.floor(ac.sampleRate * duration), ac.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i++) {
-    const p = i / data.length;
-    data[i] = (Math.random() * 2 - 1) * (1 - p);
+  function yip(start: number) {
+    const dur = 0.08;
+    const osc = ac.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(680, start);
+    osc.frequency.exponentialRampToValueAtTime(480, start + dur);
+
+    const gain = ac.createGain();
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(0.3, start + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+
+    osc.connect(gain).connect(ac.destination);
+    osc.start(start);
+    osc.stop(start + dur);
   }
-  const noise = ac.createBufferSource();
-  noise.buffer = buffer;
 
-  const bandpass = ac.createBiquadFilter();
-  bandpass.type = "bandpass";
-  bandpass.frequency.setValueAtTime(900, t);
-  bandpass.frequency.exponentialRampToValueAtTime(450, t + duration);
-  bandpass.Q.value = 4;
-
-  const osc = ac.createOscillator();
-  osc.type = "sawtooth";
-  osc.frequency.setValueAtTime(220, t);
-  osc.frequency.exponentialRampToValueAtTime(110, t + duration);
-
-  const gain = ac.createGain();
-  gain.gain.setValueAtTime(0, t);
-  gain.gain.linearRampToValueAtTime(0.45, t + 0.012);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
-
-  noise.connect(bandpass).connect(gain);
-  osc.connect(gain).connect(ac.destination);
-
-  noise.start(t);
-  osc.start(t);
-  noise.stop(t + duration);
-  osc.stop(t + duration);
+  yip(t);
+  yip(t + 0.12);
 }
 
 function vinyl(): void {

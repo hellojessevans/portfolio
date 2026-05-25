@@ -15,7 +15,7 @@ const { embedCode, width } = music!.data;
 const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale};width:${width}`;
 ---
 
-<div class="object record-embed" style={style}>
+<div class="object record-embed" style={style} data-record>
   <Fragment set:html={embedCode} />
 </div>
 

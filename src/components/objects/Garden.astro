@@ -31,7 +31,7 @@ function leafPath(attachY: number, dir: 1 | -1, size: number): string {
 }
 ---
 
-<div class="object garden" style={style} data-garden data-label="Water" role="group" aria-label="Plant — tap to water">
+<div class="object garden" style={style} data-garden data-label="Water me" role="group" aria-label="Plant — tap to water">
   <button
     type="button"
     class="plant-area"
@@ -226,12 +226,17 @@ function leafPath(attachY: number, dir: 1 | -1, size: number): string {
   }
 
   @media (max-width: 899px), (pointer: coarse) {
+    .garden[data-label]::after {
+      display: none;
+    }
     .garden {
       width: auto;
       padding: 8px;
+      margin-top: var(--garden-mt, 0px);
+      transition: margin-top 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .plant-area {
-      height: 140px;
+      height: 180px;
     }
   }
 </style>
@@ -271,6 +276,8 @@ function leafPath(attachY: number, dir: 1 | -1, size: number): string {
     const render = () => {
       const growth = Math.min(1.15, 0.55 + state.waters * 0.13);
       bodyEl.style.setProperty("--growth", String(growth));
+      const pull = Math.round((MAX_WATERS - state.waters) * 16);
+      root.style.setProperty("--garden-mt", `-${pull}px`);
 
       leafPairs.forEach((leaf, i) => {
         if (i !== 0 && i <= state.waters) leaf.classList.add("is-grown");

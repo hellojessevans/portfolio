@@ -209,7 +209,70 @@ const { label, repoUrl, tree } = entry!.data;
       font-size: 0.68rem;
     }
     .tree {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 85vw;
+      max-width: 19rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 280ms var(--ease-out-smooth);
+      z-index: 50;
+    }
+    .practice.is-open .tree {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .tree-card {
+      transform: translateY(0);
+    }
+    .hover-bridge {
       display: none;
     }
   }
 </style>
+
+<script>
+  const mobileQuery = window.matchMedia("(max-width: 899px), (pointer: coarse)");
+  if (mobileQuery.matches) {
+    document.querySelectorAll<HTMLAnchorElement>(".practice").forEach((link) => {
+      const card = link.querySelector(".card");
+
+      const tree = link.querySelector<HTMLElement>(".tree");
+
+      link.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest(".tree")) return;
+
+        if (!link.classList.contains("is-open")) {
+          e.preventDefault();
+          document.querySelectorAll(".practice.is-open").forEach((el) => {
+            el.classList.remove("is-open");
+            const t = el.querySelector<HTMLElement>(".tree");
+            if (t) t.style.left = "";
+          });
+          link.classList.add("is-open");
+
+          if (tree) {
+            requestAnimationFrame(() => {
+              const rect = tree.getBoundingClientRect();
+              if (rect.left < 8) {
+                tree.style.left = `calc(50% + ${8 - rect.left}px)`;
+              } else if (rect.right > window.innerWidth - 8) {
+                tree.style.left = `calc(50% - ${rect.right - window.innerWidth + 8}px)`;
+              }
+            });
+          }
+        }
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".practice")) {
+        document.querySelectorAll(".practice.is-open").forEach((el) => el.classList.remove("is-open"));
+      }
+    });
+  }
+</script>

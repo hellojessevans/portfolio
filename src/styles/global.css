@@ -138,7 +138,7 @@ body {
     transform: none !important;
   }
 
-  /* --- mobile row wrappers: side-by-side pairs --- */
+  /* practice-row: side-by-side pair */
   .mobile-row {
     display: flex;
     flex-direction: row;
@@ -149,67 +149,52 @@ body {
   }
 
   /* mobile stacking order */
-  .practice-row      { order: -1; }
-  .record-embed      { order: 1; }
-  .case-folder-wrap  { order: 2; }
-  .awards-plant-row  { order: 3; }
-  .reading-row       { order: 4; }
-  .colophon          { order: 5; }
+  .practice-row   { order: -1; }
+  .record-embed   { order: 1; }
+  .case-folder-wrap { order: 2; }
+  .echo           { order: 3; }
+  .hackathon-card { order: 4; }
+  .bookshelf      { order: 5; }
+  .garden         { order: 6; }
+  .colophon       { order: 7; }
 
-  /* standalone case studies — centred, extra breathing room below Spotify */
+  /* subtle tilts for practice folders */
+  .practice-row .object:first-child  { transform: rotate(-2deg) !important; }
+  .practice-row .object:last-child   { transform: rotate(2deg) !important; }
+
+  /* breathing room: top section → objects */
+  .record-embed.object {
+    margin-top: 2rem;
+  }
+
+  /* breathing room: spotify → case studies */
   .case-folder-wrap.object {
     transform: none !important;
     margin-top: 1rem;
   }
 
-  /* awards + plant row */
-  .awards-plant-row .hackathon-card {
-    flex: 0 0 auto;
-    width: 200px !important;
+  /* scattered tilts — echoes the desktop feel */
+  .record-embed.object     { transform: rotate(1.5deg) !important; }
+  .garden.object            { transform: rotate(-2deg) !important; }
+  .hackathon-card.object    { transform: rotate(1.5deg) !important; }
+  .bookshelf.object         { transform: rotate(-1.5deg) !important; }
+  .echo.object              { transform: rotate(2deg) !important; }
+
+  /* awards card — match spotify width */
+  .hackathon-card.object {
+    width: 300px !important;
   }
 
-  /* subtle tilts — echoes the scattered desktop feel */
-  .practice-row .object:first-child  { transform: rotate(-2deg) !important; }
-  .practice-row .object:last-child   { transform: rotate(2deg) !important; }
-  .record-embed.object     { transform: rotate(1.5deg) !important; }
-  .awards-plant-row .hackathon-card  { transform: rotate(-1.5deg) !important; }
-  .awards-plant-row .garden          { transform: rotate(1.5deg) !important; }
-  .reading-row .bookshelf  { transform: rotate(2deg) !important; }
-  .reading-row .echo       { transform: rotate(-1.5deg) !important; }
-
-  /* standalone spotify — centred, constrained width */
+  /* spotify — constrained width */
   .record-embed {
     width: 300px !important;
   }
 
-  /* mobile-always labels for interactive objects */
-  .echo[data-label]::after {
-    content: "Tap to feed Echo" !important;
-    opacity: 1 !important;
-    transform: translate(-50%, 6px) !important;
-  }
-  .garden[data-label]::after {
-    content: "Tap to water" !important;
-    opacity: 1 !important;
-    transform: translate(-50%, 6px) !important;
-  }
-
   /* entrance: skip staggered fade-in on mobile */
   .stage .object,
-  .stage .hero,
-  .stage .mobile-row {
+  .stage .hero {
     opacity: 1 !important;
     transition: none !important;
-  }
-}
-
-/* narrowest phones: stack rows that are too wide */
-@media (max-width: 359px) {
-  .awards-plant-row {
-    flex-direction: column !important;
-  }
-  .awards-plant-row .hackathon-card {
-    width: 200px !important;
   }
 }
 
