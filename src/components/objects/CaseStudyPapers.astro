@@ -643,6 +643,81 @@ for (let j = 0; j < outerCount; j++) {
     object-fit: contain;
     border-radius: 4px;
   }
+
+  /* ---- mobile: radial → vertical list ---- */
+  @media (max-width: 899px), (pointer: coarse) {
+    .case-folder-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    .case-folder {
+      width: 180px;
+      height: 150px;
+    }
+    .file {
+      width: 180px;
+      height: 120px;
+    }
+    .work-5::after { width: 60px; height: 12px; }
+    .work-5::before { left: 56px; width: 12px; height: 12px; top: -11px; }
+    .work-1 { height: 116px; }
+    .work-1::after { width: 110px; height: 12px; }
+    .work-1::before { right: 106px; width: 10px; height: 10px; }
+
+    /* hide radial positioning, show as vertical list */
+    .radial-ring {
+      position: relative;
+      left: auto;
+      top: auto;
+      transform: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      width: 100%;
+      max-width: 20rem;
+      margin-top: 1rem;
+    }
+    .radial-pill {
+      position: relative;
+      left: auto;
+      top: auto;
+      transform: none !important;
+      opacity: 1;
+      pointer-events: auto;
+      width: 100%;
+      white-space: normal;
+      transition: none;
+    }
+    .radial-pill:hover {
+      transform: none !important;
+    }
+    .radial-pill::before {
+      transform: translate3d(0, 0.4em, -1em);
+    }
+    .radial-pill:hover::before {
+      transform: translate3d(0, 0.2em, -1em);
+    }
+    .radial-pill:active::before {
+      transform: translate3d(0, 0, -1em);
+    }
+    [data-open] .radial-pill {
+      transform: none !important;
+      transition: none;
+    }
+    .radial-pill--disabled {
+      opacity: 0.85;
+    }
+    /* always show pills on mobile, no need for menu toggle */
+    .radial-backdrop { display: none !important; }
+
+    /* overlay responsive padding */
+    .cs-overlay-nav { padding: 1rem 1.25rem; }
+    .cs-overlay-header { padding: 2rem 1.25rem 1.5rem; }
+    .cs-overlay-body { padding: 1.5rem 1.25rem 3rem; }
+    .cs-overlay-title { font-size: 1.8rem; }
+  }
 </style>
 
 <!-- script ---------------------------------------------------------------- -->

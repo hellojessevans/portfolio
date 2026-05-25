@@ -51,6 +51,13 @@ const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale}`;
     pointer-events: none;
     opacity: 0;
   }
+
+  @media (max-width: 899px), (pointer: coarse) {
+    .echo {
+      width: 160px;
+      height: 190px;
+    }
+  }
 </style>
 
 <script>

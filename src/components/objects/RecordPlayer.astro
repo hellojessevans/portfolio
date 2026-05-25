@@ -31,4 +31,14 @@ const style = `--x:${x};--y:${y};--rot:${rot};--scale:${scale};width:${width}`;
     border: 0;
     width: 100%;
   }
+
+  @media (max-width: 899px), (pointer: coarse) {
+    .record-embed {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+    .record-embed:hover {
+      transform: none;
+    }
+  }
 </style>
