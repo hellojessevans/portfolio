@@ -12,3 +12,9 @@ App Icons/
 Echo.png
 public/logo-strip-demo.html
 public/logos/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
