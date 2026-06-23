@@ -1,8 +1,8 @@
 ---
 challengeYear: 2026
 challengeGoal: 30
-read: 14
+read: 21
 currentlyReading:
-  title: "The Last Devil to Die"
-  author: "Richard Osman"
+  title: "Caught Up"
+  author: "Liz Tomforde"
 ---
